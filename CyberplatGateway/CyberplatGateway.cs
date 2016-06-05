@@ -375,10 +375,7 @@ namespace Gateways
                 {
                     string url;
                     errorCode = 902;
-                    if (operatorFormatString != string.Empty)
-                        url = operatorFormatString;
-                    else
-                        url = statusUrl;
+                    url = statusUrl;
                     errorCode = -1;
 
                     request = msgSESSION + session + "\r\n";
@@ -457,7 +454,7 @@ namespace Gateways
 
                     session = GenerateSessionNumber();
 
-                    DateTime paymentDate = (DateTime)paymentRow["StartDateTime"];
+                    DateTime paymentDate = (DateTime)paymentRow["InitializeDateTime"];
                     //int amount = (int)(((double)cwd.row["Amount"] + 0.00001) * 100);
 
                     request =
@@ -616,7 +613,7 @@ namespace Gateways
             string request = paymentData.MessageLines;
             request = request + "\r\n" + msgAcceptKeys + cyberplatKeyNum + "\r\n"
                     + msgPaytool + 0 + "\r\n"
-                    + msgDate + DateTime.Now.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n"
+                    + msgDate + paymentData.InitializeDateTime.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n"
                     + msgTermId + paymentData.TerminalID + "\r\n";
                 
 
@@ -793,7 +790,7 @@ namespace Gateways
                 
                 WebClient webClient = new WebClient();
                 webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
-
+                
                 string answer = webClient.UploadString(cyberRequestURL, s);
 
                 string CONTENT = "CONTENT\r\n";
