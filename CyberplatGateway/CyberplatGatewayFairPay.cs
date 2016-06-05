@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Cyberplat
-{ 
+{
     public class CyberplatGatewayFairPay : CyberplatGateway, IGateway
     {
         public CyberplatGatewayFairPay() : base()

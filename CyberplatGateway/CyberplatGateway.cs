@@ -160,7 +160,7 @@ namespace Gateways
             if (cyberplatSecretKey_2 != null)
                 cyberplatSecretKey_2.closeKey();
         }
-        
+
         /// <summary>
         /// Инициализация состояния шлюза, ключи урлы и тд
         /// </summary>
@@ -383,16 +383,18 @@ namespace Gateways
             response.StatusID = status;
             int errorCode = (int)paymentRow["ErrorCode"];
             response.ErrorCode = errorCode;
-            string paymentParams = paymentRow["Params"] as string;
             double _amount = otof(paymentRow["Amount"]);
             double _amountAll = otof(paymentRow["AmountAll"]);
             string service = operatorRow["Service"] as string;
             string[] serviceUrls = service.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
-            
-
-
+            // использование форматстроки для формирования параметров
             string operatorFormatString = operatorRow["OsmpFormatString"] is DBNull || service != "" ? "" : operatorRow["OsmpFormatString"] as string;
+            string paymentParams = paymentRow["Params"] as string;
+            string formatedPaymentParams = FormatParameters(paymentParams, operatorFormatString);
+            StringList stringList = new StringList(formatedPaymentParams, "\\n");
+            paymentParams = stringList.Strings + "\\n";
+
             string requestUrl = serviceUrls.Length < 1 ? operatorRow["RequestUrl"] as string : serviceUrls[0];
             string paymentUrl = serviceUrls.Length < 2 ? operatorRow["PaymentUrl"] as string : serviceUrls[1];
             string statusUrl = serviceUrls.Length < 3 ? operatorRow["CheckUrl"] as string : serviceUrls[2];
@@ -400,6 +402,7 @@ namespace Gateways
             string request;
             string answer;
 
+            /*
             // Убираем ненужные киберу данные...
             StringList stringList = new StringList(paymentParams, "\\n");
             stringList.Remove("CARD_NUMBER");
@@ -407,6 +410,7 @@ namespace Gateways
             stringList.Remove("SESSION_FROM");
             stringList.Remove("BANK_NAME");
             paymentParams = stringList.Strings + "\\n";
+            */
 
             int result = -1;
 
@@ -417,11 +421,17 @@ namespace Gateways
                     string url;
                     errorCode = 902;
                     url = statusUrl;
+                    /*
+                    if (operatorFormatString != string.Empty)
+                        url = operatorFormatString;
+                    else
+                        url = statusUrl;
+                    */
                     errorCode = -1;
 
                     request = msgSESSION + session + "\r\n"
-                        + msgAcceptKeys + cyberplatKeyNum + "\r\n";
-                        ;
+                          + msgAcceptKeys + cyberplatKeyNum + "\r\n";
+                    ; 
                     ErrorStatus errorStatus = TransactCyberplat(url, request, out answer);
                     if (errorStatus != ErrorStatus.OK)
                     {
@@ -504,7 +514,7 @@ namespace Gateways
                         msgSESSION + session + "\r\n" +
                         msgAcceptKeys + cyberplatKeyNum + "\r\n" +
                         paymentParams.Replace("\\n", "\r\n") +
-                        msgDate + paymentDate.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n" +
+                        msgDate + DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm:ss") + "\r\n" +
                         msgPaytool + 0 + "\r\n" +
                         msgTermId + ap.ToString() + "\r\n" +
                         msgAMOUNT + ftos(_amount) + "\r\n" +
@@ -548,7 +558,30 @@ namespace Gateways
                         PreprocessPayment(ap, initial_session, session, DateTime.Now, exData);
 
                         url = paymentUrl;
-                        errorStatus = TransactCyberplat(url, request, out answer);
+                        
+                        request =
+                            msgSESSION + session + "\r\n" +
+                            msgAcceptKeys + cyberplatKeyNum + "\r\n" +
+                            paymentParams.Replace("\\n", "\r\n") +
+                            msgDate + paymentDate.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n" +
+                            msgPaytool + 0 + "\r\n" +
+                            msgTermId + ap.ToString() + "\r\n" +
+                            msgAMOUNT + ftos(_amount) + "\r\n" +
+                            msgAMOUNT_ALL + ftos(_amountAll) + "\r\n" +
+                            msgCOMMENT + initial_session + "-" + ap.ToString() + "\r\n";
+
+
+                        if ((use_second_point) && (_amount == _amountAll))
+                        {
+                            // платеж без комиссии    
+                            errorStatus = TransactCyberplat(url, request, out answer, cyberplatAP_2, cyberplatOP_2,
+                                                            cyberplatSecretKey_2);
+                        }
+                        else
+                        {
+                            // платеж с комиссией
+                            errorStatus = TransactCyberplat(url, request, out answer);
+                        }
                         if (errorStatus != ErrorStatus.OK)
                         {
                             log("Payment KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
@@ -593,7 +626,7 @@ namespace Gateways
             try
             {
                 string restText = String.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\n{3}{4}\r\n", cyberplatSD, cyberplatAP, cyberplatOP, msgAcceptKeys, cyberplatKeyNum);
-                
+
                 string url = cyberplatProcessingUrl + "/cgi-bin/mts_espp/mtspay_rest.cgi";
 
                 DetailLog("url: " + url);
@@ -605,7 +638,7 @@ namespace Gateways
                 restText = "inputmessage=" + restText;
 
 
-                
+
                 restText = webClient.UploadString(url, restText);
 
                 restText = cyberplatPublicKey.verifyText(restText);
@@ -658,7 +691,7 @@ namespace Gateways
                     + msgPaytool + 0 + "\r\n"
                     + msgDate + DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm:ss") + "\r\n"
                     + msgTermId + paymentData.TerminalID + "\r\n";
-                
+
 
             ErrorStatus errorStatus = TransactCyberplat(serviceUrls.Length < 1 ? paymentData.RequestLocalPath : serviceUrls[0], request, out responseString);
             log("Transit request is complete, (" + paymentData.RequestLocalPath + ", " + ((paymentData.Comment.Length) > 0 ? paymentData.Comment : paymentData.TerminalID.ToString()) + ")=" + errorStatus.ToString());
@@ -797,12 +830,12 @@ namespace Gateways
 
             return table;
         }
-        
+
         int ConvertOperatorID(int operatorID)
         {
             switch (operatorID)
             {
-                case 548: return 38;    
+                case 548: return 38;
                 case 714: return 49;
                 case 716: return 54;
                 case 717: return 39;
@@ -825,15 +858,17 @@ namespace Gateways
 
             try
             {
-                string request = "CLI_SERIAL=" + sd.ToString() + "\r\nDATE=" + date.ToUniversalTime().Date.ToString("dd.MM.yyyy") + "\r\n";
+                string request = "CLI_SERIAL=" + sd.ToString() 
+                    + "\r\nDATE=" + date.ToUniversalTime().Date.ToString("dd.MM.yyyy") + "\r\n"
+                    + msgAcceptKeys + cyberplatKeyNum + "\r\n";
                 string s = secretKey.signText(request);
 
                 s = HttpUtility.UrlEncode(s);
                 s = "inputmessage=" + s;
-                
+
                 WebClient webClient = new WebClient();
                 webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
-                
+
                 string answer = webClient.UploadString(cyberRequestURL, s);
 
                 string CONTENT = "CONTENT\r\n";
@@ -903,8 +938,12 @@ namespace Gateways
             return result;
         }
 
-
         private ErrorStatus TransactCyberplat(string subUrl, string request, out string response)
+        {
+            return TransactCyberplat(subUrl, request, out response, cyberplatAP, cyberplatOP, cyberplatSecretKey);
+        }
+
+        private ErrorStatus TransactCyberplat(string subUrl, string request, out string response, int ap, int op, org.CyberPlat.IPrivKey key)
         {
             ErrorStatus errorStatus = ErrorStatus.UnknownError;
 
@@ -919,29 +958,18 @@ namespace Gateways
             {
                 string url = cyberplatProcessingUrl + subUrl;
 
-                int ap = cyberplatAP;
-                int op = cyberplatOP;
-                var secret = cyberplatSecretKey;
-
-                if(use_second_point)
-                {
-                    ap = cyberplatAP_2;
-                    op = cyberplatOP_2;
-                    secret = cyberplatSecretKey_2;
-                }
-
-                request = msgAP + ap + "\r\n" +
-                    msgOP + op + "\r\n" +
+                request = msgAP + ap.ToString() + "\r\n" +
+                    msgOP + op.ToString() + "\r\n" +
                     msgSD + cyberplatSD.ToString() + "\r\n" + request;
 
-                DetailLog("url: " + url);
-
                 errorStatus = ErrorStatus.ProcessingSecretKeyError;
+
+                DetailLog("url: " + url);
 
                 if (detailLogEnabled)
                     DetailLog("request: " + request);
 
-                request = secret.signText(request);
+                request = key.signText(request);
 
                 errorStatus = ErrorStatus.UnknownError;
 
@@ -1033,8 +1061,7 @@ namespace Gateways
             }
             return errorStatus;
         }
-        
     }
 
-  
+
 }
