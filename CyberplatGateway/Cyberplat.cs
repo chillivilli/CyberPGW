@@ -53,6 +53,13 @@ namespace Gateways
         private static string msgCYBERRESULT = "CYBERRESULT=";
         private static string msgNEXTPAYMENT = "NEXTPAYMENT";
         private static string msgURL = "URL=";
+
+
+        private const string msgAcceptKeys = "ACCEPT_KEYS=";
+        private const string msgDate = "DATE=";
+        private const string msgTermId = "TERM_ID=";
+        private const string msgPaytool = "PAY_TOOL=";
+
         // Для протокола загрузки/выгрузки файлов через предпроцессинг
         private static string msgFILENAME = "FILENAME=";
         private static string msgOFFSET = "OFFSET=";
@@ -341,6 +348,9 @@ namespace Gateways
             string service = operatorRow["Service"] as string;
             string[] serviceUrls = service.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
+            
+
+
             string operatorFormatString = operatorRow["OsmpFormatString"] is DBNull || service != "" ? "" : operatorRow["OsmpFormatString"] as string;
             string requestUrl = serviceUrls.Length < 1 ? operatorRow["RequestUrl"] as string : serviceUrls[0];
             string paymentUrl = serviceUrls.Length < 2 ? operatorRow["PaymentUrl"] as string : serviceUrls[1];
@@ -447,11 +457,16 @@ namespace Gateways
 
                     session = GenerateSessionNumber();
 
+                    DateTime paymentDate = (DateTime)paymentRow["PaymentDateTime"];
                     //int amount = (int)(((double)cwd.row["Amount"] + 0.00001) * 100);
 
                     request =
                         msgSESSION + session + "\r\n" +
+                        msgAcceptKeys + cyberplatKeyNum + "\r\n" +
                         paymentParams.Replace("\\n", "\r\n") +
+                        msgDate + paymentDate.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n" +
+                        msgPaytool + 0 + "\r\n" +
+                        msgTermId + ap.ToString() + "\r\n" +
                         msgAMOUNT + ftos(_amount) + "\r\n" +
                         msgAMOUNT_ALL + ftos(_amountAll) + "\r\n" +
                         msgCOMMENT + initial_session + "-" + ap.ToString() + "\r\n";
@@ -537,14 +552,21 @@ namespace Gateways
             webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
             try
             {
-                string restText = String.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\n", cyberplatSD, cyberplatAP, cyberplatOP);
+                string restText = String.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\n{3}{4}\r\n", cyberplatSD, cyberplatAP, cyberplatOP, msgAcceptKeys, cyberplatKeyNum);
+                
+                string url = cyberplatProcessingUrl + "/cgi-bin/mts_espp/mtspay_rest.cgi";
+
+                DetailLog("url: " + url);
+                DetailLog("request: " + restText);
 
                 restText = cyberplatSecretKey.signText(restText);
 
                 restText = HttpUtility.UrlEncode(restText);
                 restText = "inputmessage=" + restText;
 
-                restText = webClient.UploadString(cyberplatProcessingUrl + "/cgi-bin/mts_espp/mtspay_rest.cgi", restText);
+
+                
+                restText = webClient.UploadString(url, restText);
 
                 restText = cyberplatPublicKey.verifyText(restText);
 
@@ -590,7 +612,13 @@ namespace Gateways
             string[] serviceUrls = service.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
 
             string responseString = "";
-            ErrorStatus errorStatus = TransactCyberplat(serviceUrls.Length < 1 ? paymentData.RequestLocalPath : serviceUrls[0], paymentData.MessageLines, out responseString);
+
+            string request = paymentData.MessageLines;
+            request = request + msgAcceptKeys + cyberplatKeyNum + "\r\n"
+                    + msgPaytool + 0 + "\r\n"
+                    + msgDate + DateTime.Now.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n";
+
+            ErrorStatus errorStatus = TransactCyberplat(serviceUrls.Length < 1 ? paymentData.RequestLocalPath : serviceUrls[0], request, out responseString);
             log("Transit request is complete, (" + paymentData.RequestLocalPath + ", " + ((paymentData.Comment.Length) > 0 ? paymentData.Comment : paymentData.TerminalID.ToString()) + ")=" + errorStatus.ToString());
             if (errorStatus != ErrorStatus.OK)
                 throw new Exception("Error SemiOnline Request.");
@@ -755,16 +783,12 @@ namespace Gateways
 
             try
             {
-                string request = "CLI_SERIAL=" + sd.ToString() + "\r\nDATE=" + date.Date.ToString("dd.MM.yyyy") + "\r\n";
+                string request = "CLI_SERIAL=" + sd.ToString() + "\r\nDATE=" + date.ToUniversalTime().Date.ToString("dd.MM.yyyy") + "\r\n";
                 string s = secretKey.signText(request);
 
                 s = HttpUtility.UrlEncode(s);
                 s = "inputmessage=" + s;
-
-
-                DetailLog("url: " + cyberRequestURL);
-                DetailLog("request: " + request);
-
+                
                 WebClient webClient = new WebClient();
                 webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
 
