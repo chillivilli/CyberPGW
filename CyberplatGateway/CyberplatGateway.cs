@@ -29,7 +29,13 @@ namespace Gateways
         private string testUrl = "/cgi-bin/es/es_pay_check.cgi";
         private string testPhone = "9166731169";
         private string proxyUrl, proxyLogin, proxyPassword;
+
         private bool use_second_point;
+        private int cyberplatAP_2 = 0;
+        private int cyberplatOP_2 = 0;
+        private string password2;
+
+        private org.CyberPlat.IPrivKey cyberplatSecretKey_2 = null;
 
         private string cyberplatStatUrl = "";
 
@@ -108,7 +114,13 @@ namespace Gateways
             this.serial = cyberplatGateway.serial;
             this.testUrl = cyberplatGateway.testUrl;
             this.testPhone = cyberplatGateway.testPhone;
+
             this.use_second_point = cyberplatGateway.use_second_point;
+            this.cyberplatAP_2 = cyberplatGateway.cyberplatAP_2;
+            this.cyberplatOP_2 = cyberplatGateway.cyberplatOP_2;
+            this.password2 = cyberplatGateway.password2;
+            this.cyberplatSecretKey_2 = cyberplatGateway.cyberplatSecretKey_2;
+
             this.proxyUrl = cyberplatGateway.proxyUrl;
             this.proxyLogin = cyberplatGateway.proxyLogin;
             this.proxyPassword= cyberplatGateway.proxyPassword;
@@ -130,6 +142,8 @@ namespace Gateways
                 cyberplatPublicKey.closeKey();
             if (cyberplatSecretStatKey != null)
                 cyberplatSecretStatKey.closeKey();
+            if (cyberplatSecretKey_2 != null)
+                cyberplatSecretKey_2.closeKey();
         }
         
         /// <summary>
@@ -149,10 +163,15 @@ namespace Gateways
                 cyberplatAP = int.Parse(xml.DocumentElement["ap"].InnerText);
                 cyberplatOP = int.Parse(xml.DocumentElement["op"].InnerText);
                 cyberplatSD = int.Parse(xml.DocumentElement["sd"].InnerText);
-                paySystemKeyID = cyberplatSD.ToString();                
+                paySystemKeyID = cyberplatSD.ToString();
+
+                this.cyberplatAP_2 = int.Parse(xml.DocumentElement["ap2"].InnerText);
+                this.cyberplatOP_2 = int.Parse(xml.DocumentElement["op2"].InnerText);
 
                 cyberplatSecretKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);                
                 cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(xml.DocumentElement["serial"].InnerText));
+
+                this.cyberplatSecretKey_2 = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key2"].InnerText, xml.DocumentElement["password2"].InnerText);
 
                 cyberplatKeyNum = xml.DocumentElement["skey_num"].InnerText;
                 if (xml.DocumentElement["use_second_point"] != null
@@ -267,7 +286,8 @@ namespace Gateways
                     response += "\r\nПроверка статистики Киберплат, RESULT=";
 
                     byte[] gzipFile;
-                    bool result = TransactCyberplatStatistics(cyberplatStatUrl, new DateTime(1990, 1, 1), this.cyberplatSD, cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
+                    bool result = TransactCyberplatStatistics(cyberplatStatUrl, new DateTime(1990, 1, 1), this.cyberplatSD, 
+                        cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
                     if (!result)
                         throw new Exception("Не удалось получить данные Cyberplat,\r\nпроверьте правильность ключей и связи с сервером Cyberplat.");
 
@@ -623,7 +643,7 @@ namespace Gateways
             string request = paymentData.MessageLines;
             request = request + "\r\n" + msgAcceptKeys + cyberplatKeyNum + "\r\n"
                     + msgPaytool + 0 + "\r\n"
-                    + msgDate + paymentData.InitializeDateTime.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n"
+                    + msgDate + DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm:ss") + "\r\n"
                     + msgTermId + paymentData.TerminalID + "\r\n";
                 
 
@@ -886,8 +906,19 @@ namespace Gateways
             {
                 string url = cyberplatProcessingUrl + subUrl;
 
-                request = msgAP + cyberplatAP.ToString() + "\r\n" +
-                    msgOP + cyberplatOP.ToString() + "\r\n" +
+                int ap = cyberplatAP;
+                int op = cyberplatOP;
+                var secret = cyberplatSecretKey;
+
+                if(use_second_point)
+                {
+                    ap = cyberplatAP_2;
+                    op = cyberplatOP_2;
+                    secret = cyberplatSecretKey_2;
+                }
+
+                request = msgAP + ap + "\r\n" +
+                    msgOP + op + "\r\n" +
                     msgSD + cyberplatSD.ToString() + "\r\n" + request;
 
                 DetailLog("url: " + url);
@@ -897,7 +928,7 @@ namespace Gateways
                 if (detailLogEnabled)
                     DetailLog("request: " + request);
 
-                request = cyberplatSecretKey.signText(request);
+                request = secret.signText(request);
 
                 errorStatus = ErrorStatus.UnknownError;
 

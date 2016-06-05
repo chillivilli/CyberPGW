@@ -10,7 +10,7 @@
        <Types>
         <Type Name="CyberplatGatewayFairPay" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="ComVisibleTypeBaseTypesShouldBeComVisible" Category="Microsoft.Interoperability" CheckId="CA1405" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="DependsOnFix">
+          <Message TypeName="ComVisibleTypeBaseTypesShouldBeComVisible" Category="Microsoft.Interoperability" CheckId="CA1405" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="DependsOnFix">
            <Issue Certainty="90" Level="Error">'CyberplatGatewayFairPay' is marked ComVisible(true) but has the following ComVisible(false) types in its object hierarchy: 'BaseGateway'</Issue>
           </Message>
          </Messages>
@@ -21,40 +21,40 @@
        <Types>
         <Type Name="CyberplatGateway" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="ComVisibleTypeBaseTypesShouldBeComVisible" Category="Microsoft.Interoperability" CheckId="CA1405" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="DependsOnFix">
+          <Message TypeName="ComVisibleTypeBaseTypesShouldBeComVisible" Category="Microsoft.Interoperability" CheckId="CA1405" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="DependsOnFix">
            <Issue Certainty="90" Level="Error">'CyberplatGateway' is marked ComVisible(true) but has the following ComVisible(false) types in its object hierarchy: 'BaseGateway'</Issue>
           </Message>
          </Messages>
          <Members>
           <Member Name="#GetStatistics(System.DateTime,System.DateTime)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="NonBreaking">
-             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="737">'CyberplatGateway.GetStatistics(DateTime, DateTime)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
+            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="NonBreaking">
+             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="765">'CyberplatGateway.GetStatistics(DateTime, DateTime)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#Initialize(System.String)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="NonBreaking">
-             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="195">'CyberplatGateway.Initialize(string)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
+            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="NonBreaking">
+             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="222">'CyberplatGateway.Initialize(string)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#ProcessOfflinePayment(System.Object,System.Object,System.Object)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="NonBreaking">
-             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="401">'CyberplatGateway.ProcessOfflinePayment(object, object, object)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
-             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="425">'CyberplatGateway.ProcessOfflinePayment(object, object, object)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
+            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="NonBreaking">
+             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="429">'CyberplatGateway.ProcessOfflinePayment(object, object, object)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
+             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="453">'CyberplatGateway.ProcessOfflinePayment(object, object, object)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#TransactCyberplat(System.String,System.String,System.String&amp;)" Kind="Method" Static="False" Accessibility="Private" ExternallyVisible="False">
            <Messages>
-            <Message TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="DependsOnFix">
-             <Issue Certainty="75" Level="Warning" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="942">Object 'receiveStream' can be disposed more than once in method 'CyberplatGateway.TransactCyberplat(string, string, out string)'. To avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.: Lines: 942, 959</Issue>
+            <Message TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="DependsOnFix">
+             <Issue Certainty="75" Level="Warning" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="981">Object 'receiveStream' can be disposed more than once in method 'CyberplatGateway.TransactCyberplat(string, string, out string)'. To avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.: Lines: 981, 998</Issue>
             </Message>
-            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 19:55:04Z" FixCategory="NonBreaking">
-             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="945">'CyberplatGateway.TransactCyberplat(string, string, out string)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
+            <Message TypeName="RethrowToPreserveStackDetails" Category="Microsoft.Usage" CheckId="CA2200" Status="Active" Created="2016-06-05 20:57:23Z" FixCategory="NonBreaking">
+             <Issue Certainty="95" Level="Error" Path="D:\Dev\DotNet\CyberPGW\CyberplatGateway" File="CyberplatGateway.cs" Line="984">'CyberplatGateway.TransactCyberplat(string, string, out string)' rethrows a caught exception and specifies it explicitly as an argument. Use 'throw' without an argument instead, in order to preserve the stack location where the exception was initially raised.</Issue>
             </Message>
            </Messages>
           </Member>
@@ -81,7 +81,7 @@
   <Rule TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202">
    <Name>Do not dispose objects multiple times</Name>
    <Description>A correctly implemented Dispose method can be called multiple times without throwing an exception. However, this is not guaranteed and to avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.</Description>
-   <Resolution Name="Default">Object {0} can be disposed more than once in method {1}. To avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.: Lines: 942, 959</Resolution>
+   <Resolution Name="Default">Object {0} can be disposed more than once in method {1}. To avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.: Lines: 981, 998</Resolution>
    <Owner>RuleOwner</Owner>
    <Url>http://msdn.microsoft.com/library/ms182334.aspx</Url>
    <Email />

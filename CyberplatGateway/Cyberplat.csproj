@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="CyberplatGateway.cs" />
     <Compile Include="CyberplatGatewayFairPay.cs" />
+    <Compile Include="Legacy.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
