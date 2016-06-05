@@ -10,4 +10,3 @@ D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\CyberplatGateway.dll.CodeAnaly
 D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\CyberplatGateway.dll.lastcodeanalysissucceeded
 D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\GatewayInterface.dll
 D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\MonitoringClientRemoting.dll
-D:\Dev\DotNet\CyberPGW\CyberplatGateway\obj\Debug\Cyberplat.csprojResolveAssemblyReference.cache

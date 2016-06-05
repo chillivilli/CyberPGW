@@ -614,7 +614,7 @@ namespace Gateways
             string responseString = "";
 
             string request = paymentData.MessageLines;
-            request = request + msgAcceptKeys + cyberplatKeyNum + "\r\n"
+            request = request + "\r\n" + msgAcceptKeys + cyberplatKeyNum + "\r\n"
                     + msgPaytool + 0 + "\r\n"
                     + msgDate + DateTime.Now.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n";
 
