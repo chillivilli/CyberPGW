@@ -1,0 +1,10 @@
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\Cyberplat.Test.dll
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\Cyberplat.Test.pdb
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\CyberplatGateway.dll
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\GatewayInterface.dll
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\MonitoringClientRemoting.dll
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\bin\Debug\CyberplatGateway.pdb
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\obj\Debug\Cyberplat.Test.csprojResolveAssemblyReference.cache
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\obj\Debug\Cyberplat.Test.dll
+D:\Dev\DotNet\CyberPGW\test\Cyberplat.Test\obj\Debug\Cyberplat.Test.pdb

@@ -757,6 +757,10 @@ namespace Gateways
                 s = HttpUtility.UrlEncode(s);
                 s = "inputmessage=" + s;
 
+
+                DetailLog("url: " + cyberRequestURL);
+                DetailLog("request: " + request);
+
                 WebClient webClient = new WebClient();
                 webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
 
@@ -848,6 +852,8 @@ namespace Gateways
                 request = msgAP + cyberplatAP.ToString() + "\r\n" +
                     msgOP + cyberplatOP.ToString() + "\r\n" +
                     msgSD + cyberplatSD.ToString() + "\r\n" + request;
+
+                DetailLog("url: " + url);
 
                 errorStatus = ErrorStatus.ProcessingSecretKeyError;
 
