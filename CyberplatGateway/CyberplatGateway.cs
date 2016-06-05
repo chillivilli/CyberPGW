@@ -29,7 +29,7 @@ namespace Gateways
         private string testUrl = "/cgi-bin/es/es_pay_check.cgi";
         private string testPhone = "9166731169";
         private string proxyUrl, proxyLogin, proxyPassword;
-
+        private bool use_second_point;
 
         private string cyberplatStatUrl = "";
 
@@ -105,17 +105,16 @@ namespace Gateways
             this.cyberplatPublicKey = cyberplatGateway.cyberplatPublicKey;
             this.cyberplatStatUrl = cyberplatGateway.cyberplatStatUrl;
             this.paySystemKeyID = cyberplatGateway.paySystemKeyID;
-
             this.serial = cyberplatGateway.serial;
             this.testUrl = cyberplatGateway.testUrl;
             this.testPhone = cyberplatGateway.testPhone;
-
+            this.use_second_point = cyberplatGateway.use_second_point;
             this.proxyUrl = cyberplatGateway.proxyUrl;
             this.proxyLogin = cyberplatGateway.proxyLogin;
             this.proxyPassword= cyberplatGateway.proxyPassword;
 
             this.GateProfileID = cyberplatGateway.GateProfileID;
-
+            
             this.showAmountAll = cyberplatGateway.showAmountAll;
 
             this.Copy(cyberplatGateway);
@@ -156,7 +155,16 @@ namespace Gateways
                 cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(xml.DocumentElement["serial"].InnerText));
 
                 cyberplatKeyNum = xml.DocumentElement["skey_num"].InnerText;
-
+                if (xml.DocumentElement["use_second_point"] != null
+                    && (xml.DocumentElement["use_second_point"].InnerText.ToLower() == "true" 
+                    || xml.DocumentElement["use_second_point"].InnerText == "1"))
+                {
+                    this.use_second_point = true;
+                }
+                else
+                {
+                    this.use_second_point = false;
+                }
                 try
                 {
                     proxyUrl = xml.DocumentElement["proxy_url"].InnerText;
@@ -378,7 +386,9 @@ namespace Gateways
                     url = statusUrl;
                     errorCode = -1;
 
-                    request = msgSESSION + session + "\r\n";
+                    request = msgSESSION + session + "\r\n"
+                        + msgAcceptKeys + cyberplatKeyNum + "\r\n";
+                        ;
                     ErrorStatus errorStatus = TransactCyberplat(url, request, out answer);
                     if (errorStatus != ErrorStatus.OK)
                     {
