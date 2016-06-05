@@ -457,7 +457,7 @@ namespace Gateways
 
                     session = GenerateSessionNumber();
 
-                    DateTime paymentDate = (DateTime)paymentRow["PaymentDateTime"];
+                    DateTime paymentDate = (DateTime)paymentRow["StartDateTime"];
                     //int amount = (int)(((double)cwd.row["Amount"] + 0.00001) * 100);
 
                     request =
@@ -616,7 +616,9 @@ namespace Gateways
             string request = paymentData.MessageLines;
             request = request + "\r\n" + msgAcceptKeys + cyberplatKeyNum + "\r\n"
                     + msgPaytool + 0 + "\r\n"
-                    + msgDate + DateTime.Now.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n";
+                    + msgDate + DateTime.Now.ToUniversalTime().ToString("dd.MM.yyyy HH:mm:ss") + "\r\n"
+                    + msgTermId + paymentData.TerminalID + "\r\n";
+                
 
             ErrorStatus errorStatus = TransactCyberplat(serviceUrls.Length < 1 ? paymentData.RequestLocalPath : serviceUrls[0], request, out responseString);
             log("Transit request is complete, (" + paymentData.RequestLocalPath + ", " + ((paymentData.Comment.Length) > 0 ? paymentData.Comment : paymentData.TerminalID.ToString()) + ")=" + errorStatus.ToString());
