@@ -1,0 +1,39 @@
+﻿  <gateway id="1" name="Cyberplat" file="CyberplatGateway.dll" type="Gateways.CyberplatGateway" priority = "0">
+    <template>
+      <sd></sd>
+      <ap hint="Номер точки в системе киберплат"></ap>
+      <op></op>
+      <password secure=""></password>
+      <secret_key key="" secure=""></secret_key>
+      <serial>904291</serial>
+      <public_key key="">
+        0000040401NS000001430000009800000125
+        0J0005              00904291
+        0J0005              00904291
+        BEGIN
+        mQBRAwANzGM8sqDiAAABAgDnfFOMT/FRvtwewkM4vC0e5z72Cxl3L03cr5FqzRIT
+        Ilmy9lTR4MGJIVm3bHulXVlEVv4C/EZYQo31czwlXBrfAAUTsAGHtAYwSjAwMDWw
+        AQM=
+        =tvCy
+        END
+        BEGIN SIGNATURE
+        iQBRAwkQAA3MYzyyoOIBATnXAf93e5A6I5RloNTEbih3Rz/6ooLd39zjB/FCzvUQ
+        y3ZR7lKfvmlSE2YrejCqDUcPHETENmfj+AejpP+ink+pJuX/sAHH
+        =eMOs
+        END SIGNATURE
+      </public_key>
+      <server_url>https://service.cyberplat.ru</server_url>
+      <test_url>/cgi-bin/es/es_pay_check.cgi</test_url>
+      <test_phone>9166731169</test_phone>
+      <stat_password secure="">123456789</stat_password>
+      <stat_secret_key key="" secure=""></stat_secret_key>
+      <stat_url>https://service.cyberplat.ru/cgi-bin/view_stat/api_stat.cgi</stat_url>
+      <show_amount_all>false</show_amount_all>
+	  <reestr_filename_start></reestr_filename_start>
+	  <use_second_point hint="Использование отдельной точки для платежей без комиссии>1</use_second_point>
+      <ap2 hint="Номер точки без комиссии"></ap2>
+      <op2 hint="Номер оператора без комиссии"></op2>
+      <password2 secure=""></password2>
+      <secret_key2 key="" secure=""></secret_key2>
+    </template>
+  </gateway>

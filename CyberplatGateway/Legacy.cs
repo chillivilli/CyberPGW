@@ -11,108 +11,98 @@
 //using System.Text.RegularExpressions;
 //using System.Threading;
 //using Gateways.Utils;
-//using org.CyberPlat;
-//using PPS.MyTools;
 
 //namespace Gateways
 //{
-//    public class LegacyCyberplatGateway : BaseGateway, IGateway, IGateOnlinePayment
+//    public class CyberplatGateway : BaseGateway, IGateway, IGateOnlinePayment
 //    {
-     
 //        protected bool detailLogEnabled = true;
 
 //        private string cyberplatProcessingUrl = "";
-
 //        private int cyberplatAP = 0;
-
 //        private int cyberplatOP = 0;
-
 //        private int cyberplatSD = 0;
-
-//        private IPrivKey cyberplatSecretKey = null;
-
-//        private IPrivKey cyberplatSecretStatKey = null;
-
-//        private IPrivKey cyberplatPublicKey = null;
-
-//        private uint serial = 904291u;
-
+//        private org.CyberPlat.IPrivKey cyberplatSecretKey = null;
+//        private org.CyberPlat.IPrivKey cyberplatSecretStatKey = null;
+//        private org.CyberPlat.IPrivKey cyberplatPublicKey = null;
+//        private uint serial = 904291;
 //        private string testUrl = "/cgi-bin/es/es_pay_check.cgi";
-
 //        private string testPhone = "9166731169";
-
-//        private string proxyUrl;
-
-//        private string proxyLogin;
-
-//        private string proxyPassword;
-
+//        private string proxyUrl, proxyLogin, proxyPassword;
+//        /// <summary>
+//        /// Использование отдельной точки для платежей без комиссии
+//        /// </summary>
 //        private bool use_second_point;
-
+//        /// <summary>
+//        /// Номер точки без комиссии
+//        /// </summary>
 //        private int cyberplatAP_2 = 0;
-
+//        /// <summary>
+//        /// Номер оператора без комиссии
+//        /// </summary>
 //        private int cyberplatOP_2 = 0;
-
+//        /// <summary>
+//        /// пароль для ключа без комисси
+//        /// </summary>
 //        private string password2;
-
-//        private IPrivKey cyberplatSecretKey_2 = null;
+//        /// <summary>
+//        /// секретный ключ для платежей без комиссии
+//        /// </summary>
+//        private org.CyberPlat.IPrivKey cyberplatSecretKey_2 = null;
 
 //        private string cyberplatStatUrl = "";
 
+
+//        #region STATIC_ATTRIBUTES
 //        private static string msgAP = "AP=";
-
 //        private static string msgOP = "OP=";
-
 //        private static string msgSD = "SD=";
-
 //        private static string msgCOMMENT = "COMMENT=";
-
 //        private static string msgSESSION = "SESSION=";
-
 //        private static string msgNUMBER = "NUMBER=";
-
 //        private static string msgACCOUNT = "ACCOUNT=";
-
 //        private static string msgAMOUNT = "AMOUNT=";
-
 //        private static string msgAMOUNT_ALL = "AMOUNT_ALL=";
-
 //        private static string msgERROR = "ERROR=";
-
 //        private static string msgRESULT = "RESULT=";
-
 //        private static string msgREQ_TYPE1 = "REQ_TYPE=1";
-
 //        private static string msgCYBERERROR = "CYBERERROR=";
-
 //        private static string msgCYBERRESULT = "CYBERRESULT=";
-
 //        private static string msgNEXTPAYMENT = "NEXTPAYMENT";
-
 //        private static string msgURL = "URL=";
-
+//        // Для протокола загрузки/выгрузки файлов через предпроцессинг
 //        private static string msgFILENAME = "FILENAME=";
-
 //        private static string msgOFFSET = "OFFSET=";
-
 //        private static string msgSIZE = "SIZE=";
-
 //        private static string msgCONTENT = "CONTENT";
-
 //        private static string msgDOWNLOAD = "DOWNLOAD=";
-
 //        private static string msgUPLOAD = "UPLOAD=";
+//        #endregion
 
-//        private static object tr_counterLock = new object();
-
+//        private static Object tr_counterLock = new Object();
 //        private static int tr_counter = 0;
 
-//        public LegacyCyberplatGateway()
+//        enum ErrorStatus
 //        {
-//            base.Balance = "";
+//            OK = 0,
+//            BadRequest = 2048,
+//            ErrorParsingKeySerial = 2049,
+//            KeySerialNotFound = 2050,
+//            WrongRequestSign = 2051,
+//            ProcessingSecretKeyError = 2052,
+//            CyberplatConnectionError = 2053,
+//            ProcessingPublicKeyError = 2054,
+//            InternalProcessingSecretKeyError = 2055,
+//            OperatorNotFound = 2056,
+//            UnknownError = 4096
 //        }
 
-//        public LegacyCyberplatGateway(LegacyCyberplatGateway cyberplatGateway)
+//        public CyberplatGateway()
+//        {
+//            Balance = "";
+//        }
+
+//        public CyberplatGateway(CyberplatGateway cyberplatGateway)
 //        {
 //            this.cyberplatProcessingUrl = cyberplatGateway.cyberplatProcessingUrl;
 //            this.cyberplatAP = cyberplatGateway.cyberplatAP;
@@ -125,1004 +115,981 @@
 //            this.cyberplatPublicKey = cyberplatGateway.cyberplatPublicKey;
 //            this.cyberplatStatUrl = cyberplatGateway.cyberplatStatUrl;
 //            this.paySystemKeyID = cyberplatGateway.paySystemKeyID;
+
 //            this.use_second_point = cyberplatGateway.use_second_point;
 //            this.cyberplatAP_2 = cyberplatGateway.cyberplatAP_2;
 //            this.cyberplatOP_2 = cyberplatGateway.cyberplatOP_2;
 //            this.password2 = cyberplatGateway.password2;
 //            this.cyberplatSecretKey_2 = cyberplatGateway.cyberplatSecretKey_2;
+
 //            this.serial = cyberplatGateway.serial;
 //            this.testUrl = cyberplatGateway.testUrl;
 //            this.testPhone = cyberplatGateway.testPhone;
+
 //            this.proxyUrl = cyberplatGateway.proxyUrl;
 //            this.proxyLogin = cyberplatGateway.proxyLogin;
 //            this.proxyPassword = cyberplatGateway.proxyPassword;
-//            base.GateProfileID = cyberplatGateway.GateProfileID;
+
+//            this.GateProfileID = cyberplatGateway.GateProfileID;
+
 //            this.showAmountAll = cyberplatGateway.showAmountAll;
-//            base.Copy(cyberplatGateway);
+
+//            this.Copy(cyberplatGateway);
 //        }
 
-//        ~LegacyCyberplatGateway()
+//        ~CyberplatGateway()
 //        {
-//            if (this.cyberplatSecretKey != null)
-//            {
-//                this.cyberplatSecretKey.closeKey();
-//            }
-//            if (this.cyberplatSecretStatKey != null)
-//            {
-//                this.cyberplatSecretStatKey.closeKey();
-//            }
-//            if (this.cyberplatPublicKey != null)
-//            {
-//                this.cyberplatPublicKey.closeKey();
-//            }
-//            if (this.cyberplatSecretStatKey != null)
-//            {
-//                this.cyberplatSecretStatKey.closeKey();
-//            }
+//            if (cyberplatSecretKey != null)
+//                cyberplatSecretKey.closeKey();
+//            if (cyberplatSecretStatKey != null)
+//                cyberplatSecretStatKey.closeKey();
+//            if (cyberplatPublicKey != null)
+//                cyberplatPublicKey.closeKey();
+//            if (cyberplatSecretStatKey != null)
+//                cyberplatSecretStatKey.closeKey();
 //        }
 
+//        /// <summary>
+//        /// Инициализация состояния шлюза, ключи урлы и тд
+//        /// </summary>
+//        /// <param name="data">Данные в xml формате, по шаблону InitializeTemplate</param>
 //        public void Initialize(string data)
 //        {
 //            try
 //            {
-//                base.log("CyberplatGateway::Initialize, GateProfileID=" + base.GateProfileID.ToString());
-//                XmlDocument xmlDocument = new XmlDocument();
-//                xmlDocument.LoadXml(data);
-//                this.cyberplatProcessingUrl = xmlDocument.DocumentElement["server_url"].InnerText;
-//                this.cyberplatAP = int.Parse(xmlDocument.DocumentElement["ap"].InnerText);
-//                this.cyberplatAP_2 = int.Parse(xmlDocument.DocumentElement["ap2"].InnerText);
-//                this.cyberplatOP = int.Parse(xmlDocument.DocumentElement["op"].InnerText);
-//                this.cyberplatOP_2 = int.Parse(xmlDocument.DocumentElement["op2"].InnerText);
-//                this.cyberplatSD = int.Parse(xmlDocument.DocumentElement["sd"].InnerText);
-//                this.paySystemKeyID = this.cyberplatSD.ToString();
-//                this.cyberplatSecretKey = IPriv.openSecretKey(xmlDocument.DocumentElement["secret_key"].InnerText, xmlDocument.DocumentElement["password"].InnerText);
-//                this.cyberplatSecretKey_2 = IPriv.openSecretKey(xmlDocument.DocumentElement["secret_key2"].InnerText, xmlDocument.DocumentElement["password2"].InnerText);
-//                this.cyberplatPublicKey = IPriv.openPublicKey(xmlDocument.DocumentElement["public_key"].InnerText, uint.Parse(xmlDocument.DocumentElement["serial"].InnerText));
-//                if (xmlDocument.DocumentElement["use_second_point"] != null && (xmlDocument.DocumentElement["use_second_point"].InnerText.ToLower() == "true" || xmlDocument.DocumentElement["use_second_point"].InnerText == "1"))
+//                log("CyberplatGateway::Initialize, GateProfileID=" + GateProfileID.ToString());
+
+//                XmlDocument xml = new XmlDocument();
+//                xml.LoadXml(data);
+
+//                cyberplatProcessingUrl = xml.DocumentElement["server_url"].InnerText;
+//                cyberplatAP = int.Parse(xml.DocumentElement["ap"].InnerText);
+//                cyberplatAP_2 = int.Parse(xml.DocumentElement["ap2"].InnerText);
+//                cyberplatOP = int.Parse(xml.DocumentElement["op"].InnerText);
+//                cyberplatOP_2 = int.Parse(xml.DocumentElement["op2"].InnerText);
+//                cyberplatSD = int.Parse(xml.DocumentElement["sd"].InnerText);
+//                paySystemKeyID = cyberplatSD.ToString();
+
+//                cyberplatKeyNum = xml.DocumentElement["skey_num"].InnerText;
+
+//                cyberplatSecretKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);
+//                cyberplatSecretKey_2 = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key2"].InnerText, xml.DocumentElement["password2"].InnerText);
+//                cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(xml.DocumentElement["serial"].InnerText));
+
+//                if (xml.DocumentElement["use_second_point"] != null &&
+//                    (xml.DocumentElement["use_second_point"].InnerText.ToLower() == "true" ||
+//                     xml.DocumentElement["use_second_point"].InnerText == "1"))
 //                {
-//                    this.use_second_point = true;
+//                    use_second_point = true;
 //                }
 //                else
-//                {
-//                    this.use_second_point = false;
-//                }
+//                    use_second_point = false;
+
 //                try
 //                {
-//                    this.proxyUrl = xmlDocument.DocumentElement["proxy_url"].InnerText;
-//                    this.proxyLogin = xmlDocument.DocumentElement["proxy_login"].InnerText;
-//                    this.proxyPassword = xmlDocument.DocumentElement["proxy_password"].InnerText;
-//                    base.log("CyberplatGateway::Initialize, proxy parameters OK");
+//                    proxyUrl = xml.DocumentElement["proxy_url"].InnerText;
+//                    proxyLogin = xml.DocumentElement["proxy_login"].InnerText;
+//                    proxyPassword = xml.DocumentElement["proxy_password"].InnerText;
+//                    log("CyberplatGateway::Initialize, proxy parameters OK");
 //                }
 //                catch
 //                {
-//                    base.log("CyberplatGateway::Initialize, proxy disabled");
+//                    log("CyberplatGateway::Initialize, proxy disabled");
 //                }
-//                if (this.cyberplatAP == 0 || this.cyberplatProcessingUrl == "")
-//                {
+
+//                if ((cyberplatAP == 0) || (cyberplatProcessingUrl == ""))
 //                    throw new Exception("Error! One or more parameters not set");
-//                }
+
 //                try
 //                {
-//                    this.cyberplatStatUrl = xmlDocument.DocumentElement["stat_url"].InnerText;
-//                    this.cyberplatSecretStatKey = IPriv.openSecretKey(xmlDocument.DocumentElement["stat_secret_key"].InnerText, xmlDocument.DocumentElement["stat_password"].InnerText);
+//                    cyberplatStatUrl = xml.DocumentElement["stat_url"].InnerText;
+//                    cyberplatSecretStatKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["stat_secret_key"].InnerText, xml.DocumentElement["stat_password"].InnerText);
 //                }
 //                catch (Exception ex)
 //                {
-//                    base.log("CyberplatGateway::Initialize, stat params exception:" + ex.ToString());
+//                    log("CyberplatGateway::Initialize, stat params exception:" + ex.ToString());
 //                }
+
+
 //                try
 //                {
-//                    this.serial = uint.Parse(xmlDocument.DocumentElement["serial"].InnerText);
-//                    this.testUrl = xmlDocument.DocumentElement["test_url"].InnerText;
-//                    this.testPhone = xmlDocument.DocumentElement["test_phone"].InnerText;
+//                    serial = uint.Parse(xml.DocumentElement["serial"].InnerText);
+//                    testUrl = xml.DocumentElement["test_url"].InnerText;
+//                    testPhone = xml.DocumentElement["test_phone"].InnerText;
 //                }
-//                catch
-//                {
-//                }
+//                catch { }
+
 //            }
 //            catch (Exception ex)
 //            {
-//                base.log("CyberplatGateway::Initialize exception: " + ex.ToString());
+//                log("CyberplatGateway::Initialize exception: " + ex.ToString());
 //                throw ex;
 //            }
 //        }
 
+//        /// <summary>
+//        /// Проверка параметров
+//        /// </summary>
+//        /// <returns></returns>
 //        public string CheckSettings()
 //        {
-//            CyberplatGateway.ErrorStatus errorStatus = CyberplatGateway.ErrorStatus.UnknownError;
-//            string text = "No response.";
+//            ErrorStatus errorStatus = ErrorStatus.UnknownError;
+
+//            string response = "No response.";
 //            try
 //            {
-//                string text2 = ((int)(DateTime.Now - DateTime.Now.Date).TotalMilliseconds).ToString();
-//                while (text2.Length < 12)
-//                {
-//                    text2 = "0" + text2;
-//                }
-//                text2 = text2.Substring(text2.Length - 12, 12);
-//                string text3 = string.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\nSESSION={3}\r\nNUMBER={4}\r\nAMOUNT=10.00\r\nAMOUNT_ALL=10.00\r\n{5}", new object[]
-//                {
-//                    this.cyberplatSD,
-//                    this.cyberplatAP,
-//                    this.cyberplatOP,
-//                    DateTime.Now.ToString("ddMMyyyy") + text2,
-//                    this.testPhone,
-//                    (this.testPhone != "1111111111") ? "REQ_TYPE=1\r\nCOMMENT=MONITORING_CHECK\r\n" : ""
-//                });
-//                errorStatus = CyberplatGateway.ErrorStatus.ProcessingSecretKeyError;
-//                text3 = this.cyberplatSecretKey.signText(text3);
-//                errorStatus = CyberplatGateway.ErrorStatus.UnknownError;
-//                text3 = HttpUtility.UrlEncode(text3);
-//                text3 = "inputmessage=" + text3;
+//                string msc = ((int)((DateTime.Now - DateTime.Now.Date).TotalMilliseconds)).ToString();
+//                while (msc.Length < 12)
+//                    msc = "0" + msc;
+//                msc = msc.Substring(msc.Length - 12, 12);
+
+//                string requestString = string.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\nSESSION={3}\r\nNUMBER={4}\r\nAMOUNT=10.00\r\nAMOUNT_ALL=10.00\r\n{5}",
+//                    cyberplatSD, cyberplatAP, cyberplatOP, DateTime.Now.ToString("ddMMyyyy") + msc, testPhone, testPhone != "1111111111" ? "REQ_TYPE=1\r\nCOMMENT=MONITORING_CHECK\r\n" : "");
+
+//                errorStatus = ErrorStatus.ProcessingSecretKeyError;
+
+//                requestString = cyberplatSecretKey.signText(requestString);
+
+//                errorStatus = ErrorStatus.UnknownError;
+
+//                requestString = HttpUtility.UrlEncode(requestString);
+//                requestString = "inputmessage=" + requestString;
+
 //                WebClient webClient = new WebClient();
 //                webClient.Encoding = Encoding.GetEncoding(1251);
-//                errorStatus = CyberplatGateway.ErrorStatus.CyberplatConnectionError;
-//                string text4 = webClient.UploadString(this.cyberplatProcessingUrl + this.testUrl, text3);
-//                errorStatus = CyberplatGateway.ErrorStatus.ProcessingPublicKeyError;
-//                text4 = this.cyberplatPublicKey.verifyText(text4);
-//                text = text4;
-//                errorStatus = CyberplatGateway.ErrorStatus.InternalProcessingSecretKeyError;
-//                string str = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys");
-//                if (File.Exists(str + "\\internal.keyInfo"))
+
+//                errorStatus = ErrorStatus.CyberplatConnectionError;
+
+//                string responseString = webClient.UploadString(cyberplatProcessingUrl + testUrl, requestString);
+
+//                errorStatus = ErrorStatus.ProcessingPublicKeyError;
+
+//                responseString = cyberplatPublicKey.verifyText(responseString);
+
+//                response = responseString;
+//                errorStatus = ErrorStatus.InternalProcessingSecretKeyError;
+
+//                string keyPath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Keys");
+
+//                if (File.Exists(keyPath + "\\internal.keyInfo"))
 //                {
-//                    XmlDocument xmlDocument = new XmlDocument();
-//                    xmlDocument.LoadXml(File.ReadAllText(str + "\\internal.keyInfo", Encoding.GetEncoding(1251)));
-//                    IPrivKey privKey = IPriv.openSecretKey(xmlDocument.DocumentElement["secret_key"].InnerText, xmlDocument.DocumentElement["password"].InnerText);
-//                    text4 = privKey.signText(text4);
-//                    errorStatus = CyberplatGateway.ErrorStatus.OK;
-//                    privKey.closeKey();
+//                    XmlDocument xml = new XmlDocument();
+//                    xml.LoadXml(File.ReadAllText(keyPath + "\\internal.keyInfo", Encoding.GetEncoding(1251)));
+//                    org.CyberPlat.IPrivKey internalKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);
+
+//                    responseString = internalKey.signText(responseString);
+//                    errorStatus = ErrorStatus.OK;
+//                    internalKey.closeKey();
 //                }
+
 //                try
 //                {
-//                    text += "\r\nПроверка статистики Киберплат, RESULT=";
-//                    byte[] array;
-//                    if (!this.TransactCyberplatStatistics(this.cyberplatStatUrl, new DateTime(1990, 1, 1), this.cyberplatSD, this.cyberplatSecretStatKey, this.cyberplatPublicKey, out array))
-//                    {
+//                    response += "\r\nПроверка статистики Киберплат, RESULT=";
+
+//                    byte[] gzipFile;
+//                    bool result = TransactCyberplatStatistics(cyberplatStatUrl, new DateTime(1990, 1, 1), this.cyberplatSD, cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
+//                    if (!result)
 //                        throw new Exception("Не удалось получить данные Cyberplat,\r\nпроверьте правильность ключей и связи с сервером Cyberplat.");
-//                    }
-//                    text += "OK";
+
+//                    response += "OK";
 //                }
 //                catch (Exception ex)
 //                {
-//                    text += ex.Message;
+//                    response += ex.Message;
 //                }
 //            }
-//            catch (IPrivException ex2)
+//            catch (org.CyberPlat.IPrivException e)
 //            {
-//                text = ex2.ToString();
+//                response = e.ToString();
 //            }
 //            catch
 //            {
 //            }
-//            return errorStatus.ToString() + "\r\n" + text;
+
+//            return errorStatus.ToString() + "\r\n" + response;
 //        }
 
+//        /// <summary>
+//        /// Оффлайн обработка платежа
+//        /// </summary>
+//        /// <param name="paymentData"></param>
+//        /// <param name="operatorData"></param>
 //        public void ProcessPayment(object paymentData, object operatorData, object exData)
 //        {
-//            DataRow dataRow = paymentData as DataRow;
-//            string arg = dataRow["InitialSessionNumber"] as string;
+//            DataRow paymentRow = paymentData as DataRow;
+//            string initial_session = (paymentRow["InitialSessionNumber"] as string);
 //            try
 //            {
-//                this.ProcessOfflinePayment(paymentData, operatorData, exData);
+//                ProcessOfflinePayment(paymentData, operatorData, exData);
 //            }
 //            catch (Exception ex)
 //            {
-//                base.log(string.Format("ProcessOfflinePayment KeyID={2}(initial_session={0}) exception: {1}", arg, ex.Message, this.keyID));
+//                log(string.Format("ProcessOfflinePayment KeyID={2}(initial_session={0}) exception: {1}", initial_session, ex.Message, keyID));
 //            }
 //        }
 
+//        /// <summary>
+//        /// Онлайн проведение платежа
+//        /// </summary>
 //        public OnlinePaymentResponse ProcessOnlinePayment(DataRow paymentRow, object operatorData)
 //        {
-//            OnlinePaymentResponse onlinePaymentResponse = new OnlinePaymentResponse();
-//            string arg = paymentRow["InitialSessionNumber"] as string;
+//            OnlinePaymentResponse response = new OnlinePaymentResponse();
+//            string initial_session = paymentRow["InitialSessionNumber"] as string;
 //            try
 //            {
-//                onlinePaymentResponse.StatusID = (int)paymentRow["StatusID"];
-//                onlinePaymentResponse.ErrorCode = (int)paymentRow["ErrorCode"];
-//                if (onlinePaymentResponse.StatusID < 7 || onlinePaymentResponse.StatusID == 103 || onlinePaymentResponse.StatusID == 104)
-//                {
-//                    onlinePaymentResponse = this.ProcessOfflinePayment(paymentRow, operatorData, null);
-//                }
+//                response.StatusID = (int)paymentRow["StatusID"];
+//                response.ErrorCode = (int)paymentRow["ErrorCode"];
+
+//                if ((response.StatusID < 7) || (response.StatusID == 103) || (response.StatusID == 104))
+//                    response = ProcessOfflinePayment(paymentRow, operatorData, null);
 //            }
 //            catch (Exception ex)
 //            {
-//                base.log(string.Format("ProcessOnlinePayment KeyID={2} (initial_session={0}) exception: {1}", arg, ex.Message, this.keyID));
+//                log(string.Format("ProcessOnlinePayment KeyID={2} (initial_session={0}) exception: {1}", initial_session, ex.Message, keyID));
 //            }
-//            return onlinePaymentResponse;
+
+//            return response;
 //        }
 
+//        /// <summary>
+//        /// Оффлайн обработка платежа
+//        /// </summary>
+//        /// <param name="paymentData"></param>
+//        /// <param name="operatorData"></param>
 //        public OnlinePaymentResponse ProcessOfflinePayment(object paymentData, object operatorData, object exData)
 //        {
-//            OnlinePaymentResponse onlinePaymentResponse = new OnlinePaymentResponse();
-//            DataRow dataRow = paymentData as DataRow;
-//            DataRow dataRow2 = operatorData as DataRow;
-//            string text = dataRow["InitialSessionNumber"] as string;
-//            string text2 = (dataRow["SessionNumber"] is DBNull) ? "" : (dataRow["SessionNumber"] as string);
-//            int num = (int)dataRow["CyberplatOperatorID"];
-//            int num2 = (int)dataRow["TerminalID"];
-//            int num3 = (int)dataRow["StatusID"];
-//            onlinePaymentResponse.StatusID = num3;
-//            int num4 = (int)dataRow["ErrorCode"];
-//            onlinePaymentResponse.ErrorCode = num4;
-//            double num5 = BaseGateway.otof(dataRow["Amount"]);
-//            double num6 = BaseGateway.otof(dataRow["AmountAll"]);
-//            string text3 = dataRow2["Service"] as string;
-//            string[] array = text3.Split(new string[]
-//            {
-//                ";"
-//            }, StringSplitOptions.RemoveEmptyEntries);
-//            string text4 = (dataRow2["OsmpFormatString"] is DBNull || text3 != "") ? "" : (dataRow2["OsmpFormatString"] as string);
-//            string text5 = dataRow["Params"] as string;
-//            string text6 = BaseGateway.FormatParameters(text5, text4);
-//            Utils.StringList stringList = new Utils.StringList(text6, "\\n");
-//            text5 = stringList.Strings + "\\n";
-//            string text7 = (array.Length < 1) ? (dataRow2["RequestUrl"] as string) : array[0];
-//            string text8 = (array.Length < 2) ? (dataRow2["PaymentUrl"] as string) : array[1];
-//            string text9 = (array.Length < 3) ? (dataRow2["CheckUrl"] as string) : array[2];
-//            int num7 = -1;
-//            if (text2.Length > 0)
+//            OnlinePaymentResponse response = new OnlinePaymentResponse();
+//            DataRow paymentRow = paymentData as DataRow;
+//            DataRow operatorRow = operatorData as DataRow;
+
+//            string initial_session = (paymentRow["InitialSessionNumber"] as string);
+//            string session = (paymentRow["SessionNumber"] is DBNull) ? "" : (paymentRow["SessionNumber"] as string);
+//            int cyberplatOperatorID = (int)paymentRow["CyberplatOperatorID"];
+//            int ap = (int)paymentRow["TerminalID"];
+//            int status = (int)paymentRow["StatusID"];
+//            response.StatusID = status;
+//            int errorCode = (int)paymentRow["ErrorCode"];
+//            response.ErrorCode = errorCode;
+//            double _amount = otof(paymentRow["Amount"]);
+//            double _amountAll = otof(paymentRow["AmountAll"]);
+//            string service = operatorRow["Service"] as string;
+//            string[] serviceUrls = service.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+
+//            // использование форматстроки для формирования параметров
+//            string operatorFormatString = operatorRow["OsmpFormatString"] is DBNull || service != "" ? "" : operatorRow["OsmpFormatString"] as string;
+//            string paymentParams = paymentRow["Params"] as string;
+//            string formatedPaymentParams = FormatParameters(paymentParams, operatorFormatString);
+//            StringList stringList = new StringList(formatedPaymentParams, "\\n");
+//            paymentParams = stringList.Strings + "\\n";
+
+//            string requestUrl = serviceUrls.Length < 1 ? operatorRow["RequestUrl"] as string : serviceUrls[0];
+//            string paymentUrl = serviceUrls.Length < 2 ? operatorRow["PaymentUrl"] as string : serviceUrls[1];
+//            string statusUrl = serviceUrls.Length < 3 ? operatorRow["CheckUrl"] as string : serviceUrls[2];
+
+//            string request;
+//            string answer;
+
+//            /*
+//            // Убираем ненужные киберу данные...
+//            StringList stringList = new StringList(paymentParams, "\\n");
+//            stringList.Remove("CARD_NUMBER");
+//            stringList.Remove("POINT_FROM");
+//            stringList.Remove("SESSION_FROM");
+//            stringList.Remove("BANK_NAME");
+//            paymentParams = stringList.Strings + "\\n";
+//            */
+
+//            int result = -1;
+
+//            if (session.Length > 0)
 //            {
 //                try
 //                {
-//                    num4 = 902;
-//                    string subUrl = text9;
-//                    num4 = -1;
-//                    string request = CyberplatGateway.msgSESSION + text2 + "\r\n";
-//                    string text10;
-//                    CyberplatGateway.ErrorStatus errorStatus = this.TransactCyberplat(subUrl, request, out text10);
-//                    if (errorStatus != CyberplatGateway.ErrorStatus.OK)
+//                    string url;
+//                    errorCode = 902;
+//                    url = statusUrl;
+//                    /*
+//                    if (operatorFormatString != string.Empty)
+//                        url = operatorFormatString;
+//                    else
+//                        url = statusUrl;
+//                    */
+//                    errorCode = -1;
+
+//                    request = msgSESSION + session + "\r\n";
+//                    ErrorStatus errorStatus = TransactCyberplat(url, request, out answer);
+//                    if (errorStatus != ErrorStatus.OK)
 //                    {
-//                        base.log(string.Concat(new object[]
-//                        {
-//                            "Status KeyID=",
-//                            this.keyID,
-//                            " (",
-//                            text,
-//                            ",",
-//                            text2,
-//                            ")=",
-//                            errorStatus.ToString()
-//                        }));
+//                        log("Status KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
 //                        throw new Exception("$");
 //                    }
-//                    string[] array2 = text10.Split(new string[]
-//                    {
-//                        "\r\n"
-//                    }, StringSplitOptions.None);
-//                    for (int i = 0; i < array2.Length; i++)
+//                    string[] messageLines = answer.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+
+//                    for (int i = 0; i < messageLines.Length; i++)
 //                    {
 //                        try
 //                        {
-//                            if (array2[i].StartsWith(CyberplatGateway.msgERROR))
-//                            {
-//                                num4 = int.Parse(array2[i].Substring(CyberplatGateway.msgERROR.Length));
-//                            }
-//                            if (array2[i].StartsWith(CyberplatGateway.msgRESULT) && array2[i].Length > CyberplatGateway.msgRESULT.Length)
-//                            {
-//                                num7 = int.Parse(array2[i].Substring(CyberplatGateway.msgRESULT.Length));
-//                            }
+//                            if (messageLines[i].StartsWith(msgERROR))
+//                                errorCode = int.Parse(messageLines[i].Substring(msgERROR.Length));
+//                            if (messageLines[i].StartsWith(msgRESULT) && messageLines[i].Length > msgRESULT.Length)
+//                                result = int.Parse(messageLines[i].Substring(msgRESULT.Length));
 //                        }
-//                        catch (ThreadAbortException ex)
+//                        catch (ThreadAbortException e)
 //                        {
-//                            throw ex;
+//                            throw e;
 //                        }
 //                        catch
 //                        {
 //                        }
 //                    }
-//                    base.log(string.Concat(new object[]
+
+//                    log("Status KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + result.ToString() + "," + errorCode.ToString());
+
+//                    if (errorCode == 11)
 //                    {
-//                        "Status KeyID=",
-//                        this.keyID,
-//                        " (",
-//                        text,
-//                        ",",
-//                        text2,
-//                        ")=",
-//                        num7.ToString(),
-//                        ",",
-//                        num4.ToString()
-//                    }));
-//                    if (num4 == 11)
-//                    {
-//                        if (!(dataRow["PaymentDateTime"] is DBNull))
-//                        {
-//                            throw new Exception(string.Concat(new string[]
-//                            {
-//                                "Error 11 for status for payment with initial_session=",
-//                                text,
-//                                ", session=",
-//                                text2,
-//                                ", error=",
-//                                num4.ToString(),
-//                                "!"
-//                            }));
-//                        }
-//                        num7 = 0;
+//                        if (paymentRow["PaymentDateTime"] is DBNull)
+//                            result = 0;
+//                        else
+//                            throw new Exception("Error 11 for status for payment with initial_session=" + initial_session + ", session=" + session + ", error=" + errorCode.ToString() + "!");
 //                    }
-//                    if (num7 == -1)
-//                    {
-//                        throw new Exception(string.Concat(new string[]
-//                        {
-//                            "Error checking status for payment initial_session=",
-//                            text,
-//                            ", session=",
-//                            text2,
-//                            ", error=",
-//                            num4.ToString(),
-//                            "!"
-//                        }));
-//                    }
-//                    if (num4 != 0 && num7 == 7)
-//                    {
-//                        num7 = 0;
-//                    }
+//                    if ((result == -1)/* || (errorCode == 24) || (errorCode == 30)*/)
+//                        throw new Exception("Error checking status for payment initial_session=" + initial_session + ", session=" + session + ", error=" + errorCode.ToString() + "!");
+
+//                    if ((errorCode != 0) && (result == 7))
+//                        result = 0;
 //                }
-//                catch (Exception ex2)
+//                catch (Exception ex)
 //                {
-//                    if (num4 == 11 || num4 == 902 || (DateTime)dataRow["StartDateTime"] + TimeSpan.FromDays(1.0) < DateTime.Now)
+//                    if ((errorCode == 11) || (errorCode == 902) || ((DateTime)paymentRow["StartDateTime"] + TimeSpan.FromDays(1) < DateTime.Now))
 //                    {
-//                        BaseGateway.PreprocessPaymentStatus.Invoke(num2, text, num4, 101, exData);
-//                        onlinePaymentResponse.StatusID = 101;
-//                        onlinePaymentResponse.ErrorCode = num4;
+//                        PreprocessPaymentStatus(ap, initial_session, errorCode, 101, exData);
+//                        response.StatusID = 101;
+//                        response.ErrorCode = errorCode;
 //                    }
-//                    throw ex2;
+//                    throw ex;
 //                }
 //            }
-//            if ((num3 == 103 || num3 == 104) && num7 < 2)
+
+//            if (((status == 103) || (status == 104)) && (result < 2))
 //            {
-//                BaseGateway.PreprocessPaymentStatus.Invoke(num2, text, (int)dataRow["ErrorCode"], (num3 == 103) ? 102 : 100, exData);
-//                onlinePaymentResponse.StatusID = ((num3 == 103) ? 102 : 100);
-//                onlinePaymentResponse.ErrorCode = (int)dataRow["ErrorCode"];
+//                PreprocessPaymentStatus(ap, initial_session, (int)paymentRow["ErrorCode"], (status == 103) ? 102 : 100, exData);
+//                response.StatusID = (status == 103) ? 102 : 100;
+//                response.ErrorCode = (int)paymentRow["ErrorCode"];
 //            }
 //            else
 //            {
-//                if (num7 >= 2 && num7 != num3)
+//                if ((result >= 2) && (result != status))
 //                {
-//                    BaseGateway.PreprocessPaymentStatus.Invoke(num2, text, (int)dataRow["ErrorCode"], num7, exData);
-//                    onlinePaymentResponse.StatusID = num7;
-//                    onlinePaymentResponse.ErrorCode = (int)dataRow["ErrorCode"];
+//                    PreprocessPaymentStatus(ap, initial_session, (int)paymentRow["ErrorCode"], result, exData);
+//                    response.StatusID = result;
+//                    response.ErrorCode = (int)paymentRow["ErrorCode"];
+//                    //if (result == 7)
+//                    //    ServerStatistics.AddProcessingPayment();
 //                }
-//                if (num7 < 2)
+//                if (result < 2)
 //                {
-//                    num3 = num7;
-//                    text2 = BaseGateway.GenerateSessionNumber();
-//                    string request = string.Concat(new string[]
+//                    status = result;
+
+//                    session = GenerateSessionNumber();
+
+//                    //int amount = (int)(((double)cwd.row["Amount"] + 0.00001) * 100);
+
+//                    request =
+//                        msgSESSION + session + "\r\n" +
+//                        paymentParams.Replace("\\n", "\r\n") +
+//                        msgAMOUNT + ftos(_amount) + "\r\n" +
+//                        msgAMOUNT_ALL + ftos(_amountAll) + "\r\n" +
+//                        msgCOMMENT + initial_session + "-" + ap.ToString() + "\r\n";
+
+//                    string url = requestUrl;
+//                    ErrorStatus errorStatus = TransactCyberplat(url, request, out answer);
+//                    if (errorStatus != ErrorStatus.OK)
 //                    {
-//                        CyberplatGateway.msgSESSION,
-//                        text2,
-//                        "\r\n",
-//                        text5.Replace("\\n", "\r\n"),
-//                        CyberplatGateway.msgAMOUNT,
-//                        BaseGateway.ftos(num5),
-//                        "\r\n",
-//                        CyberplatGateway.msgAMOUNT_ALL,
-//                        BaseGateway.ftos(num6),
-//                        "\r\n",
-//                        CyberplatGateway.msgCOMMENT,
-//                        text,
-//                        "-",
-//                        num2.ToString(),
-//                        "\r\n"
-//                    });
-//                    string subUrl = text7;
-//                    string text10;
-//                    CyberplatGateway.ErrorStatus errorStatus = this.TransactCyberplat(subUrl, request, out text10);
-//                    if (errorStatus != CyberplatGateway.ErrorStatus.OK)
-//                    {
-//                        base.log(string.Concat(new object[]
-//                        {
-//                            "Request KeyID=",
-//                            this.keyID,
-//                            " (",
-//                            text,
-//                            ",",
-//                            text2,
-//                            ")=",
-//                            errorStatus.ToString()
-//                        }));
+//                        log("Request KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
 //                        throw new Exception("$");
 //                    }
-//                    string[] array2 = text10.Split(new string[]
+//                    string[] messageLines = answer.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+
+//                    errorCode = -1;
+//                    for (int i = 0; i < messageLines.Length; i++)
 //                    {
-//                        "\r\n"
-//                    }, StringSplitOptions.None);
-//                    num4 = -1;
-//                    for (int i = 0; i < array2.Length; i++)
-//                    {
-//                        if (array2[i].StartsWith(CyberplatGateway.msgERROR))
-//                        {
-//                            num4 = int.Parse(array2[i].Substring(CyberplatGateway.msgERROR.Length));
-//                        }
-//                        if (array2[i].StartsWith(CyberplatGateway.msgRESULT) && array2[i].Length > CyberplatGateway.msgRESULT.Length)
-//                        {
-//                            num7 = int.Parse(array2[i].Substring(CyberplatGateway.msgRESULT.Length));
-//                        }
+//                        if (messageLines[i].StartsWith(msgERROR))
+//                            errorCode = int.Parse(messageLines[i].Substring(msgERROR.Length));
+//                        if (messageLines[i].StartsWith(msgRESULT) && messageLines[i].Length > msgRESULT.Length)
+//                            result = int.Parse(messageLines[i].Substring(msgRESULT.Length));
 //                    }
-//                    base.log(string.Concat(new object[]
-//                    {
-//                        "Request KeyID=",
-//                        this.keyID,
-//                        " (",
-//                        text,
-//                        ",",
-//                        text2,
-//                        ")=",
-//                        num4.ToString()
-//                    }));
-//                    if (num4 == 21)
-//                    {
-//                        this.zeroBalance = true;
-//                    }
+
+//                    log("Request KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorCode.ToString());
+
+//                    if (errorCode == 21)
+//                        zeroBalance = true;
 //                    else
+//                        zeroBalance = false;
+
+//                    if (errorCode > 0)
 //                    {
-//                        this.zeroBalance = false;
+//                        PreprocessPaymentStatus(ap, initial_session, errorCode, 0, exData);
+//                        response.StatusID = 0;
+//                        response.ErrorCode = errorCode;
 //                    }
-//                    if (num4 > 0)
+
+//                    if ((errorCode == 0) && (result == 0))
 //                    {
-//                        BaseGateway.PreprocessPaymentStatus.Invoke(num2, text, num4, 0, exData);
-//                        onlinePaymentResponse.StatusID = 0;
-//                        onlinePaymentResponse.ErrorCode = num4;
-//                    }
-//                    if (num4 == 0 && num7 == 0)
-//                    {
-//                        BaseGateway.PreprocessPayment.Invoke(num2, text, text2, DateTime.Now, exData);
-//                        subUrl = text8;
-//                        if (this.use_second_point && num5 == num6)
+//                        PreprocessPayment(ap, initial_session, session, DateTime.Now, exData);
+
+//                        url = paymentUrl;
+
+//                        if ((use_second_point) && (_amount == _amountAll))
 //                        {
-//                            errorStatus = this.TransactCyberplat(subUrl, request, out text10, this.cyberplatAP_2, this.cyberplatOP_2, this.cyberplatSecretKey_2);
+//                            // платеж без комиссии    
+//                            errorStatus = TransactCyberplat(url, request, out answer, cyberplatAP_2, cyberplatOP_2,
+//                                                            cyberplatSecretKey_2);
 //                        }
 //                        else
 //                        {
-//                            errorStatus = this.TransactCyberplat(subUrl, request, out text10);
+//                            // платеж с комиссией
+//                            errorStatus = TransactCyberplat(url, request, out answer);
 //                        }
-//                        if (errorStatus != CyberplatGateway.ErrorStatus.OK)
+//                        if (errorStatus != ErrorStatus.OK)
 //                        {
-//                            base.log(string.Concat(new object[]
-//                            {
-//                                "Payment KeyID=",
-//                                this.keyID,
-//                                " (",
-//                                text,
-//                                ",",
-//                                text2,
-//                                ")=",
-//                                errorStatus.ToString()
-//                            }));
+//                            log("Payment KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
 //                            throw new Exception("$");
 //                        }
-//                        array2 = text10.Split(new string[]
+
+//                        messageLines = answer.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+
+//                        for (int i = 0; i < messageLines.Length; i++)
 //                        {
-//                            "\r\n"
-//                        }, StringSplitOptions.None);
-//                        for (int i = 0; i < array2.Length; i++)
-//                        {
-//                            if (array2[i].StartsWith(CyberplatGateway.msgERROR))
-//                            {
-//                                num4 = int.Parse(array2[i].Substring(CyberplatGateway.msgERROR.Length));
-//                            }
-//                            if (array2[i].StartsWith(CyberplatGateway.msgRESULT) && array2[i].Length > CyberplatGateway.msgRESULT.Length)
-//                            {
-//                                num3 = int.Parse(array2[i].Substring(CyberplatGateway.msgRESULT.Length));
-//                            }
+//                            if (messageLines[i].StartsWith(msgERROR))
+//                                errorCode = int.Parse(messageLines[i].Substring(msgERROR.Length));
+//                            if (messageLines[i].StartsWith(msgRESULT) && messageLines[i].Length > msgRESULT.Length)
+//                                status = int.Parse(messageLines[i].Substring(msgRESULT.Length));
 //                        }
-//                        if (num4 == 21)
-//                        {
-//                            this.zeroBalance = true;
-//                        }
+
+//                        if (errorCode == 21)
+//                            zeroBalance = true;
 //                        else
+//                            zeroBalance = false;
+
+//                        if ((errorCode == 1) || (errorCode == 11)) // session alredy exists or stupid 11 cyber error (no session in DB)
 //                        {
-//                            this.zeroBalance = false;
+//                            PreprocessPayment(ap, initial_session, "", DateTime.Now, exData);
 //                        }
-//                        if (num4 == 1 || num4 == 11)
-//                        {
-//                            BaseGateway.PreprocessPayment.Invoke(num2, text, "", DateTime.Now, exData);
-//                        }
-//                        base.log(string.Concat(new object[]
-//                        {
-//                            "Payment KeyID=",
-//                            this.keyID,
-//                            " (",
-//                            text,
-//                            ",",
-//                            text2,
-//                            ")=",
-//                            num4.ToString()
-//                        }));
+
+//                        log("Payment KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorCode.ToString());
 //                    }
 //                }
 //            }
-//            return onlinePaymentResponse;
+//            return response;
 //        }
 
+//        /// <summary>
+//        /// Получение балланса
+//        /// </summary>
+//        /// <returns></returns>
 //        public override string RequestBalance()
 //        {
 //            WebClient webClient = new WebClient();
-//            webClient.Encoding = Encoding.GetEncoding(1251);
+//            webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
 //            try
 //            {
-//                string text = string.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\n", this.cyberplatSD, this.cyberplatAP, this.cyberplatOP);
-//                text = this.cyberplatSecretKey.signText(text);
-//                text = HttpUtility.UrlEncode(text);
-//                text = "inputmessage=" + text;
-//                text = webClient.UploadString(this.cyberplatProcessingUrl + "/cgi-bin/mts_espp/mtspay_rest.cgi", text);
-//                text = this.cyberplatPublicKey.verifyText(text);
-//                string[] array = text.Split(new string[]
+//                string restText = String.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\n", cyberplatSD, cyberplatAP, cyberplatOP);
+
+//                restText = cyberplatSecretKey.signText(restText);
+
+//                restText = HttpUtility.UrlEncode(restText);
+//                restText = "inputmessage=" + restText;
+
+//                restText = webClient.UploadString(cyberplatProcessingUrl + "/cgi-bin/mts_espp/mtspay_rest.cgi", restText);
+
+//                restText = cyberplatPublicKey.verifyText(restText);
+
+
+//                string[] lines = restText.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+//                foreach (string line in lines)
 //                {
-//                    "\r\n"
-//                }, StringSplitOptions.RemoveEmptyEntries);
-//                string[] array2 = array;
-//                for (int i = 0; i < array2.Length; i++)
-//                {
-//                    string text2 = array2[i];
-//                    if (text2.ToLower().StartsWith("rest="))
+//                    if (line.ToLower().StartsWith("rest="))
 //                    {
 //                        try
 //                        {
-//                            text = BaseGateway.ftos(BaseGateway.otof(text2.Substring(text2.IndexOf('=') + 1)));
+//                            restText = ftos(otof(line.Substring(line.IndexOf('=') + 1)));
 //                        }
 //                        catch
 //                        {
-//                            text = text2.Substring(text2.IndexOf('=') + 1);
+//                            restText = line.Substring(line.IndexOf('=') + 1);
 //                        }
+
 //                        break;
 //                    }
 //                }
-//                base.log(string.Concat(new object[]
-//                {
-//                    "GetBalance for KeyID =",
-//                    base.KeyID,
-//                    " OK: ",
-//                    text
-//                }));
-//                base.Balance = text;
+
+//                log("GetBalance for KeyID =" + KeyID + " OK: " + restText);
+//                Balance = restText;
 //            }
 //            catch (Exception ex)
 //            {
-//                base.Balance = "";
-//                base.log(string.Concat(new object[]
-//                {
-//                    "GetBalance for KeyID =",
-//                    base.KeyID,
-//                    " exception: ",
-//                    ex.Message
-//                }));
+//                Balance = "";
+//                log("GetBalance for KeyID =" + KeyID + " exception: " + ex.Message);
 //            }
-//            return base.Balance;
+
+//            return Balance;
 //        }
 
+//        /// <summary>
+//        /// Онлайн проверка платежа
+//        /// </summary>
 //        public override string ProcessOnlineCheck(NewPaymentData paymentData, object operatorData)
 //        {
-//            DataRow dataRow = operatorData as DataRow;
-//            string text = dataRow["Service"] as string;
-//            string[] array = text.Split(new string[]
-//            {
-//                ";"
-//            }, StringSplitOptions.RemoveEmptyEntries);
-//            string result = "";
-//            CyberplatGateway.ErrorStatus errorStatus = this.TransactCyberplat((array.Length < 1) ? paymentData.RequestLocalPath : array[0], paymentData.MessageLines, out result);
-//            base.log(string.Concat(new string[]
-//            {
-//                "Transit request is complete, (",
-//                paymentData.RequestLocalPath,
-//                ", ",
-//                (paymentData.Comment.Length > 0) ? paymentData.Comment : paymentData.TerminalID.ToString(),
-//                ")=",
-//                errorStatus.ToString()
-//            }));
-//            if (errorStatus != CyberplatGateway.ErrorStatus.OK)
-//            {
+//            DataRow operatorRow = operatorData as DataRow;
+//            string service = operatorRow["Service"] as string;
+//            string[] serviceUrls = service.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+
+//            string responseString = "";
+//            ErrorStatus errorStatus = TransactCyberplat(serviceUrls.Length < 1 ? paymentData.RequestLocalPath : serviceUrls[0], paymentData.MessageLines, out responseString);
+//            log("Transit request is complete, (" + paymentData.RequestLocalPath + ", " + ((paymentData.Comment.Length) > 0 ? paymentData.Comment : paymentData.TerminalID.ToString()) + ")=" + errorStatus.ToString());
+//            if (errorStatus != ErrorStatus.OK)
 //                throw new Exception("Error SemiOnline Request.");
-//            }
-//            return result;
+
+//            return responseString;
 //        }
 
 //        public override DataTable GetStatistics(DateTime dateFrom, DateTime dateTo)
 //        {
-//            DataTable dataTable = new DataTable();
-//            string text = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stat");
-//            if (!Directory.Exists(text))
-//            {
-//                Directory.CreateDirectory(text);
-//            }
-//            string text2 = Path.Combine(text, string.Concat(new string[]
-//            {
-//                "file_stat",
-//                base.GateProfileID.ToString(),
-//                ".",
-//                dateFrom.Date.ToString("yyyy-MM-dd"),
-//                ".gz"
-//            }));
-//            base.log("Trying to get statistic file '" + text2.Substring(text.Length) + "'...");
-//            byte[] array;
-//            if (!this.TransactCyberplatStatistics(this.cyberplatStatUrl, dateFrom.Date, this.cyberplatSD, this.cyberplatSecretStatKey, this.cyberplatPublicKey, out array))
+//            DataTable table = new DataTable();
+//            string statPath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "stat");
+//            if (!Directory.Exists(statPath))
+//                Directory.CreateDirectory(statPath);
+
+//            string fileName = Path.Combine(statPath, "file_stat" + GateProfileID.ToString() + "." + dateFrom.Date.ToString("yyyy-MM-dd") + ".gz");
+//            log("Trying to get statistic file '" + fileName.Substring(statPath.Length) + "'...");
+//            byte[] gzipFile;
+
+//            bool result = TransactCyberplatStatistics(cyberplatStatUrl, dateFrom.Date, cyberplatSD, cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
+//            if (!result)
 //            {
 //                throw new Exception("TransactCyberplatStatistics failed");
 //            }
-//            dataTable.Columns.Add("TerminalID");
-//            dataTable.Columns.Add("InitialSessionNumber");
-//            dataTable.Columns.Add("Transaction");
-//            dataTable.Columns.Add("PaymentDateTime");
-//            dataTable.Columns.Add("AmountAll");
-//            dataTable.Columns.Add("Amount");
-//            dataTable.Columns.Add("CyberplatOperatorID");
-//            dataTable.Columns.Add("Params");
-//            dataTable.Columns.Add("GateId");
-//            if (array.Length > 0)
+
+//            table.Columns.Add("TerminalID");
+//            table.Columns.Add("InitialSessionNumber");
+//            table.Columns.Add("Transaction");
+//            table.Columns.Add("PaymentDateTime");
+//            table.Columns.Add("AmountAll");
+//            table.Columns.Add("Amount");
+//            table.Columns.Add("CyberplatOperatorID");
+//            table.Columns.Add("Params");
+//            table.Columns.Add("GateId");
+
+//            if (gzipFile.Length > 0)
 //            {
-//                int num = 0;
-//                int num2 = 0;
-//                File.WriteAllBytes(text2, array);
-//                base.log("Received cyberplat statistics file '" + text2.Substring(text.Length) + "'");
-//                SevenZip.Unzip(AppDomain.CurrentDomain.BaseDirectory + "\\7z.exe", "x -y", text2, text);
-//                File.Delete(text2);
-//                text2 = text2.Substring(0, text2.Length - Path.GetExtension(text2).Length);
-//                string[] array2 = File.ReadAllLines(text2, Encoding.GetEncoding(1251));
-//                int num3 = 0;
-//                string[] array3 = array2;
-//                for (int i = 0; i < array3.Length; i++)
+//                int lineNumber = 0;
+//                int linesProcessed = 0;
+
+//                File.WriteAllBytes(fileName, gzipFile);
+//                log("Received cyberplat statistics file '" + fileName.Substring(statPath.Length) + "'");
+
+//                PPS.MyTools.SevenZip.Unzip(System.AppDomain.CurrentDomain.BaseDirectory + "\\7z.exe", "x -y", fileName, statPath);
+
+//                File.Delete(fileName);
+
+//                fileName = fileName.Substring(0, fileName.Length - Path.GetExtension(fileName).Length);
+
+//                string[] lines = File.ReadAllLines(fileName, Encoding.GetEncoding(1251));
+//                int lineOK = 0;
+
+//                foreach (string line in lines)
 //                {
-//                    string text3 = array3[i];
-//                    string[] array4 = text3.Split(new char[]
+//                    string[] data = line.Split('|');
+
+//                    if (data.Length < 14)
+//                        continue;
+
+//                    try
 //                    {
-//                        '|'
-//                    });
-//                    if (array4.Length >= 14)
-//                    {
-//                        try
+//                        int error = int.Parse(data[8]);
+//                        int status = int.Parse(data[11]);
+
+//                        if ((status != 7) || (error != 0))
+//                            continue;
+
+//                        string transaction = data[0];
+//                        DateTime time = DateTime.Parse(dateFrom.ToString("yyyy-MM-dd ") + data[1]);
+//                        int terminalID = 0;
+//                        string param = "";
+//                        if (data[6].Length > 0)
 //                        {
-//                            int num4 = int.Parse(array4[8]);
-//                            int num5 = int.Parse(array4[11]);
-//                            if (num5 != 7 || num4 != 0)
-//                            {
-//                                goto IL_52F;
-//                            }
-//                            string text4 = array4[0];
-//                            DateTime dateTime = DateTime.Parse(dateFrom.ToString("yyyy-MM-dd ") + array4[1]);
-//                            int num6 = 0;
-//                            string text5 = "";
-//                            if (array4[6].Length > 0)
-//                            {
-//                                text5 = "Phone=\"" + array4[6] + "\"";
-//                                if (array4[5].Length > 0)
-//                                {
-//                                    text5 += ", ";
-//                                }
-//                            }
-//                            if (array4[5].Length > 0)
-//                            {
-//                                text5 = text5 + "Account=\"" + array4[5] + "\"";
-//                            }
-//                            double num7 = BaseGateway.otof(array4[7]);
-//                            int num8 = int.Parse(array4[10]);
-//                            string text6 = array4[12];
-//                            double num9 = num7;
-//                            try
-//                            {
-//                                num9 = BaseGateway.otof(array4[13]);
-//                            }
-//                            catch
-//                            {
-//                            }
-//                            while (text4.Length < 20)
-//                            {
-//                                text4 = "0" + text4;
-//                            }
-//                            text4 = text4.Substring(0, 20);
-//                            if (text6.Length > 20 && text6[20] == '-')
-//                            {
-//                                num6 = int.Parse(text6.Substring(21));
-//                                text6 = text6.Substring(0, 20);
-//                            }
-//                            else if (text6.Length == 20)
-//                            {
-//                                num6 = int.Parse(array4[3]);
-//                                text6 = text6.Substring(0, 20);
-//                            }
-//                            else
-//                            {
-//                                text6 = text4;
-//                            }
-//                            if (text5.Length > 256)
-//                            {
-//                                text5 = text5.Substring(0, 256);
-//                            }
-//                            num8 = this.ConvertOperatorID(num8);
-//                            dataTable.Rows.Add(new object[]
-//                            {
-//                                num6,
-//                                text6,
-//                                text4,
-//                                dateTime,
-//                                num9,
-//                                num7,
-//                                num8,
-//                                text5,
-//                                base.GatewayID
-//                            });
-//                            num3 = 0;
-//                            num2++;
+//                            param = "Phone=\"" + data[6] + "\"";
+//                            if (data[5].Length > 0)
+//                                param += ", ";
 //                        }
-//                        catch (Exception ex)
+
+//                        if (data[5].Length > 0)
+//                            param += "Account=\"" + data[5] + "\"";
+
+//                        double amount = otof(data[7]);
+//                        int operatorID = int.Parse(data[10]);
+//                        string session = data[12];
+//                        double amountAll = amount;
+//                        try { amountAll = otof(data[13]); }
+//                        catch { }
+
+//                        while (transaction.Length < 20)
+//                            transaction = "0" + transaction;
+//                        transaction = transaction.Substring(0, 20);
+
+//                        if ((session.Length > 20) && (session[20] == '-'))
 //                        {
-//                            num3++;
-//                            if (num3 > 10)
-//                            {
-//                                base.log("ProcessCyberplatStatistics error - Can't parse line " + num.ToString() + " (trminating job)." + ex.ToString());
-//                                throw ex;
-//                            }
-//                            base.log("ProcessCyberplatStatistics error - Can't parse line " + num.ToString() + ". " + ex.ToString());
+//                            terminalID = int.Parse(session.Substring(21));
+//                            session = session.Substring(0, 20);
 //                        }
-//                        num++;
+//                        else if (session.Length == 20)
+//                        {
+//                            terminalID = int.Parse(data[3]);
+//                            session = session.Substring(0, 20);
+//                        }
+//                        else
+//                            session = transaction;
+
+//                        if (param.Length > 256)
+//                            param = param.Substring(0, 256);
+
+//                        operatorID = ConvertOperatorID(operatorID);
+
+//                        table.Rows.Add(new object[] { terminalID, session, transaction, time, amountAll, amount, operatorID, param, GatewayID });
+
+//                        lineOK = 0;
+//                        linesProcessed++;
 //                    }
-//                IL_52F:;
+//                    catch (Exception ex)
+//                    {
+//                        lineOK++;
+//                        if (lineOK > 10)
+//                        {
+//                            log("ProcessCyberplatStatistics error - Can't parse line " + lineNumber.ToString() + " (trminating job)." + ex.ToString());
+//                            throw ex;
+//                        }
+//                        else
+//                            log("ProcessCyberplatStatistics error - Can't parse line " + lineNumber.ToString() + ". " + ex.ToString());
+//                    }
+
+//                    lineNumber++;
 //                }
 //            }
 //            else
 //            {
-//                base.log("ProcessCyberplatStatistics zero length response file");
+//                log("ProcessCyberplatStatistics zero length response file");
 //            }
-//            return dataTable;
+
+//            return table;
 //        }
 
-//        private int ConvertOperatorID(int operatorID)
+//        int ConvertOperatorID(int operatorID)
 //        {
-//            int result;
-//            if (operatorID != 548)
+//            switch (operatorID)
 //            {
-//                switch (operatorID)
-//                {
-//                    case 714:
-//                        result = 49;
-//                        return result;
-//                    case 716:
-//                        result = 54;
-//                        return result;
-//                    case 717:
-//                        result = 39;
-//                        return result;
-//                }
-//                result = operatorID;
+//                case 548: return 38;
+//                case 714: return 49;
+//                case 716: return 54;
+//                case 717: return 39;
+//                default: return operatorID;
 //            }
-//            else
-//            {
-//                result = 38;
-//            }
-//            return result;
 //        }
 
+//        /// <summary>
+//        /// Возвращает копию объекта
+//        /// </summary>
 //        public virtual IGateway Clone()
 //        {
 //            return new CyberplatGateway(this);
 //        }
 
-//        public bool TransactCyberplatStatistics(string cyberRequestURL, DateTime date, int sd, IPrivKey secretKey, IPrivKey publicKey, out byte[] gzipFile)
+//        public bool TransactCyberplatStatistics(string cyberRequestURL, DateTime date, int sd, org.CyberPlat.IPrivKey secretKey, org.CyberPlat.IPrivKey publicKey, out byte[] gzipFile)
 //        {
-//            bool flag = false;
-//            gzipFile = new byte[0];
+//            bool result = false;
+//            gzipFile = new byte[] { };
+
 //            try
 //            {
-//                string text = string.Concat(new string[]
-//                {
-//                    "CLI_SERIAL=",
-//                    sd.ToString(),
-//                    "\r\nDATE=",
-//                    date.Date.ToString("dd.MM.yyyy"),
-//                    "\r\n"
-//                });
-//                string text2 = secretKey.signText(text);
-//                text2 = HttpUtility.UrlEncode(text2);
-//                text2 = "inputmessage=" + text2;
-//                string text3 = new WebClient
-//                {
-//                    Encoding = Encoding.GetEncoding(1251)
-//                }.UploadString(cyberRequestURL, text2);
-//                string text4 = "CONTENT\r\n";
-//                int num = text3.IndexOf(text4);
-//                if (num >= 0)
-//                {
-//                    Encoding @default = Encoding.Default;
-//                    gzipFile = @default.GetBytes(text3.Substring(num + text4.Length));
-//                    text3 = text3.Substring(0, num);
-//                }
-//                text3 = publicKey.verifyText(text3);
-//                string text5 = "ERROR=";
-//                int num2 = text3.IndexOf(text5);
-//                if (num2 < 0)
-//                {
-//                    throw new Exception("Не найдено поле ERROR, answer=" + text3);
-//                }
-//                num2 += text5.Length;
-//                int num3 = int.Parse(text3.Substring(num2, text3.IndexOf("\r\n", num2) - num2));
-//                if (num3 == 23)
-//                {
-//                    gzipFile = new byte[0];
-//                    flag = true;
-//                }
-//                else if (num3 == 0 && num >= 0)
-//                {
-//                    string text6 = "SIZE=";
-//                    int num4 = text3.IndexOf(text6);
-//                    if (num4 < 0)
-//                    {
-//                        throw new Exception("Не найдено поле SIZE, answer=" + text3);
-//                    }
-//                    num4 += text6.Length;
-//                    int num5 = int.Parse(text3.Substring(num4, text3.IndexOf("\r\n", num4) - num4));
-//                    if (num5 != gzipFile.Length)
-//                    {
-//                        throw new Exception("Значение поля SIZE не соответствует длине файла, answer=" + text3);
-//                    }
-//                    string text7 = "DATE=";
-//                    int num6 = text3.IndexOf(text7);
-//                    if (num6 < 0)
-//                    {
-//                        throw new Exception("Не найдено поле DATE, answer=" + text3);
-//                    }
-//                    num6 += text7.Length;
-//                    string a = text3.Substring(num6, text3.IndexOf("\r\n", num6) - num6);
-//                    if (a != date.Date.ToString("dd.MM.yyyy"))
-//                    {
-//                        throw new Exception("Значение поля DATE не соответствует запрашиваемой дате '" + date.Date.ToString("dd-MM-yyyy") + "', answer=" + text3);
-//                    }
-//                    flag = true;
-//                }
-//            }
-//            catch (IPrivException ex)
-//            {
-//                base.log("Ошибка ключей: " + ex.ToString() + " ");
-//            }
-//            catch (Exception ex2)
-//            {
-//                base.log(ex2.ToString());
-//            }
-//            if (!flag)
-//            {
-//                gzipFile = new byte[0];
-//            }
-//            return flag;
-//        }
+//                string request = "CLI_SERIAL=" + sd.ToString() + "\r\nDATE=" + date.Date.ToString("dd.MM.yyyy") + "\r\n";
+//                string s = secretKey.signText(request);
 
-//        private CyberplatGateway.ErrorStatus TransactCyberplat(string subUrl, string request, out string response)
-//        {
-//            return this.TransactCyberplat(subUrl, request, out response, this.cyberplatAP, this.cyberplatOP, this.cyberplatSecretKey);
-//        }
+//                s = HttpUtility.UrlEncode(s);
+//                s = "inputmessage=" + s;
 
-//        private CyberplatGateway.ErrorStatus TransactCyberplat(string subUrl, string request, out string response, int ap, int op, IPrivKey key)
-//        {
-//            CyberplatGateway.ErrorStatus result = CyberplatGateway.ErrorStatus.UnknownError;
-//            int num;
-//            lock (CyberplatGateway.tr_counterLock)
-//            {
-//                num = CyberplatGateway.tr_counter++;
+//                WebClient webClient = new WebClient();
+//                webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
+
+//                string answer = webClient.UploadString(cyberRequestURL, s);
+
+//                string CONTENT = "CONTENT\r\n";
+//                int fileIndex = answer.IndexOf(CONTENT);
+//                if (fileIndex >= 0)
+//                {
+//                    Encoding encoding = Encoding.Default;
+//                    gzipFile = encoding.GetBytes(answer.Substring(fileIndex + CONTENT.Length));
+
+//                    answer = answer.Substring(0, fileIndex);
+//                }
+
+//                answer = publicKey.verifyText(answer);
+
+//                string ERROR = "ERROR=";
+//                int errorIndex = answer.IndexOf(ERROR);
+//                if (errorIndex < 0)
+//                    throw new Exception("Не найдено поле ERROR, answer=" + answer);
+
+//                errorIndex += ERROR.Length;
+//                int error = int.Parse(answer.Substring(errorIndex, answer.IndexOf("\r\n", errorIndex) - errorIndex));
+
+//                if (error == 23) // 23 - нет данных
+//                {
+//                    gzipFile = new byte[] { };
+//                    result = true;
+//                }
+//                else if ((error == 0) && (fileIndex >= 0))
+//                {
+
+//                    string SIZE = "SIZE=";
+//                    int sizeIndex = answer.IndexOf(SIZE);
+//                    if (sizeIndex < 0)
+//                        throw new Exception("Не найдено поле SIZE, answer=" + answer);
+
+//                    sizeIndex += SIZE.Length;
+//                    int size = int.Parse(answer.Substring(sizeIndex, answer.IndexOf("\r\n", sizeIndex) - sizeIndex));
+//                    if (size != gzipFile.Length)
+//                        throw new Exception("Значение поля SIZE не соответствует длине файла, answer=" + answer);
+
+
+//                    string DATE = "DATE=";
+//                    int dateIndex = answer.IndexOf(DATE);
+//                    if (dateIndex < 0)
+//                        throw new Exception("Не найдено поле DATE, answer=" + answer);
+
+//                    dateIndex += DATE.Length;
+//                    string date1 = answer.Substring(dateIndex, answer.IndexOf("\r\n", dateIndex) - dateIndex);
+//                    if (date1 != date.Date.ToString("dd.MM.yyyy"))
+//                        throw new Exception("Значение поля DATE не соответствует запрашиваемой дате '" + date.Date.ToString("dd-MM-yyyy") + "', answer=" + answer);
+
+//                    result = true;
+//                }
 //            }
-//            response = "";
-//            try
+//            catch (org.CyberPlat.IPrivException err)
 //            {
-//                string requestUriString = this.cyberplatProcessingUrl + subUrl;
-//                request = string.Concat(new string[]
-//                {
-//                    CyberplatGateway.msgAP,
-//                    ap.ToString(),
-//                    "\r\n",
-//                    CyberplatGateway.msgOP,
-//                    op.ToString(),
-//                    "\r\n",
-//                    CyberplatGateway.msgSD,
-//                    this.cyberplatSD.ToString(),
-//                    "\r\n",
-//                    request
-//                });
-//                result = CyberplatGateway.ErrorStatus.ProcessingSecretKeyError;
-//                if (this.detailLogEnabled)
-//                {
-//                    base.DetailLog("request: " + request);
-//                }
-//                request = key.signText(request);
-//                result = CyberplatGateway.ErrorStatus.UnknownError;
-//                Encoding encoding = Encoding.GetEncoding(1251);
-//                request = HttpUtility.UrlEncode(request, encoding);
-//                request = "inputmessage=" + request;
-//                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUriString);
-//                if (!string.IsNullOrEmpty(this.proxyUrl))
-//                {
-//                    WebProxy webProxy = new WebProxy(this.proxyUrl, true);
-//                    if (!string.IsNullOrEmpty(this.proxyLogin))
-//                    {
-//                        webProxy.Credentials = new NetworkCredential(this.proxyLogin, this.proxyPassword);
-//                    }
-//                    httpWebRequest.Proxy = webProxy;
-//                }
-//                Stream stream = null;
-//                WebResponse webResponse = null;
-//                Stream stream2 = null;
-//                StreamReader streamReader = null;
-//                try
-//                {
-//                    httpWebRequest.Method = "POST";
-//                    httpWebRequest.Timeout = 100000;
-//                    httpWebRequest.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
-//                    httpWebRequest.ConnectionGroupName = num.ToString() + "req2cyber";
-//                    byte[] bytes = encoding.GetBytes(request);
-//                    httpWebRequest.ContentType = "application/x-www-form-urlencoded";
-//                    httpWebRequest.ContentLength = (long)bytes.Length;
-//                    httpWebRequest.KeepAlive = false;
-//                    result = CyberplatGateway.ErrorStatus.CyberplatConnectionError;
-//                    stream = httpWebRequest.GetRequestStream();
-//                    stream.Write(bytes, 0, bytes.Length);
-//                    stream.Close();
-//                    stream = null;
-//                    webResponse = httpWebRequest.GetResponse();
-//                    stream2 = webResponse.GetResponseStream();
-//                    streamReader = new StreamReader(stream2, encoding);
-//                    response = streamReader.ReadToEnd();
-//                    streamReader.Close();
-//                    streamReader = null;
-//                    stream2.Close();
-//                    stream2 = null;
-//                    webResponse.Close();
-//                    webResponse = null;
-//                }
-//                catch (Exception ex)
-//                {
-//                    if (stream != null)
-//                    {
-//                        try
-//                        {
-//                            stream.Close();
-//                        }
-//                        catch
-//                        {
-//                        }
-//                    }
-//                    if (streamReader != null)
-//                    {
-//                        try
-//                        {
-//                            streamReader.Close();
-//                        }
-//                        catch
-//                        {
-//                        }
-//                    }
-//                    if (stream2 != null)
-//                    {
-//                        try
-//                        {
-//                            stream2.Close();
-//                        }
-//                        catch
-//                        {
-//                        }
-//                    }
-//                    if (webResponse != null)
-//                    {
-//                        try
-//                        {
-//                            webResponse.Close();
-//                        }
-//                        catch
-//                        {
-//                        }
-//                    }
-//                    throw ex;
-//                }
-//                result = CyberplatGateway.ErrorStatus.ProcessingPublicKeyError;
-//                response = this.cyberplatPublicKey.verifyText(response);
-//                if (this.detailLogEnabled)
-//                {
-//                    base.DetailLog("response: " + response);
-//                }
-//                result = CyberplatGateway.ErrorStatus.OK;
+//                log("Ошибка ключей: " + err.ToString() + " ");
 //            }
 //            catch (Exception ex)
 //            {
-//                base.log("TransactCyberplatFailed:\n" + ex.ToString());
+//                log(ex.ToString());
 //            }
+
+//            if (!result)
+//                gzipFile = new byte[] { };
+
 //            return result;
 //        }
 
+//        private ErrorStatus TransactCyberplat(string subUrl, string request, out string response)
+//        {
+//            return TransactCyberplat(subUrl, request, out response, cyberplatAP, cyberplatOP, cyberplatSecretKey);
+//        }
 
+//        private ErrorStatus TransactCyberplat(string subUrl, string request, out string response, int ap, int op, org.CyberPlat.IPrivKey key)
+//        {
+//            ErrorStatus errorStatus = ErrorStatus.UnknownError;
+
+//            int tr_no;
+//            lock (tr_counterLock)
+//            {
+//                tr_no = tr_counter++;
+//            }
+
+//            response = "";
+//            try
+//            {
+//                string url = cyberplatProcessingUrl + subUrl;
+
+//                request = msgAP + ap.ToString() + "\r\n" +
+//                    msgOP + op.ToString() + "\r\n" +
+//                    msgSD + cyberplatSD.ToString() + "\r\n" + request;
+
+//                errorStatus = ErrorStatus.ProcessingSecretKeyError;
+
+//                if (detailLogEnabled)
+//                    DetailLog("request: " + request);
+
+//                request = key.signText(request);
+
+//                errorStatus = ErrorStatus.UnknownError;
+
+//                Encoding enc = Encoding.GetEncoding(1251);
+//                request = HttpUtility.UrlEncode(request, enc);
+//                request = "inputmessage=" + request;
+
+//                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url); //+"?"+request); (GET)
+//                if (!String.IsNullOrEmpty(proxyUrl))
+//                {
+//                    WebProxy proxy = new WebProxy(proxyUrl, true);
+//                    if (!String.IsNullOrEmpty(proxyLogin))
+//                        proxy.Credentials = new NetworkCredential(proxyLogin, proxyPassword);
+//                    req.Proxy = proxy;
+//                }
+
+//                Stream requestStream = null;
+//                WebResponse res = null;
+//                Stream receiveStream = null;
+//                StreamReader readStream = null;
+//                try
+//                {
+//                    req.Method = "POST";
+//                    req.Timeout = 100000;
+//                    //req.TransferEncoding = 
+//                    req.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
+//                    req.ConnectionGroupName = tr_no.ToString() + "req2cyber";
+//                    byte[] data = enc.GetBytes(request);
+//                    req.ContentType = "application/x-www-form-urlencoded";
+//                    req.ContentLength = data.Length;
+//                    req.KeepAlive = false;
+
+//                    errorStatus = ErrorStatus.CyberplatConnectionError;
+
+//                    requestStream = req.GetRequestStream();
+//                    requestStream.Write(data, 0, data.Length);
+//                    requestStream.Close();
+//                    requestStream = null;
+
+//                    res = req.GetResponse();
+
+//                    receiveStream = res.GetResponseStream();
+
+//                    // Pipes the stream to a higher level stream reader with the required encoding format. 
+//                    readStream = new StreamReader(receiveStream, enc);
+
+//                    response = readStream.ReadToEnd();
+
+//                    readStream.Close(); readStream = null;
+//                    receiveStream.Close(); receiveStream = null;
+//                    res.Close(); res = null;
+//                }
+//                catch (Exception ex)
+//                {
+//                    if (requestStream != null)
+//                    {
+//                        try { requestStream.Close(); }
+//                        catch { };
+//                    }
+//                    if (readStream != null)
+//                    {
+//                        try { readStream.Close(); }
+//                        catch { };
+//                    }
+//                    if (receiveStream != null)
+//                    {
+//                        try { receiveStream.Close(); }
+//                        catch { };
+//                    }
+//                    if (res != null)
+//                    {
+//                        try { res.Close(); }
+//                        catch { };
+//                    }
+
+//                    throw ex;
+//                }
+//                errorStatus = ErrorStatus.ProcessingPublicKeyError;
+//                response = cyberplatPublicKey.verifyText(response);
+
+//                if (detailLogEnabled)
+//                    DetailLog("response: " + response);
+
+//                errorStatus = ErrorStatus.OK;
+//            }
+//            catch (Exception ex)
+//            {
+//                log("TransactCyberplatFailed:\n" + ex.ToString());
+//            }
+//            return errorStatus;
+//        }
 //    }
 
+//    public class CyberplatGatewayFairPay : CyberplatGateway, IGateway
+//    {
+//        public CyberplatGatewayFairPay() : base()
+//        {
+//        }
 
+//        public CyberplatGatewayFairPay(CyberplatGatewayFairPay cyberplatGatewayFairPay) : base(cyberplatGatewayFairPay)
+//        {
+//        }
+
+//        /// <summary>
+//        /// Возвращает копию объекта
+//        /// </summary>
+//        public override IGateway Clone()
+//        {
+//            return new CyberplatGatewayFairPay(this);
+//        }
+
+//        public override string ProcessOnlineCheck(NewPaymentData paymentData, object operatorData)
+//        {
+//            string responseString = base.ProcessOnlineCheck(paymentData, operatorData);
+
+//            if (paymentData.CyberplatOperatorID == 35)
+//                responseString += CheckOnlineCyberID_35(paymentData);
+
+//            return responseString;
+//        }
+
+//        string CheckOnlineCyberID_35(NewPaymentData paymentData)
+//        {
+//            const string msgADDINFO = "ADDINFO=";
+//            string result = "Нет данных";
+//            try
+//            {
+//                Match match = Regex.Match(paymentData.Params, "NUMBER=(?<ID>\\d+)");
+//                if (match.Success)
+//                {
+//                    string code = match.Groups["ID"].Value;
+//                    match = Regex.Match(paymentData.Params, "ACCOUNT=(?<MONTH>\\d{2})(?<YEAR>\\d{2})::(?<INSUR>\\d)");
+//                    if (match.Success)
+//                    {
+//                        int year = DateTime.Now.Year - (int.Parse(match.Groups["YEAR"].Value) + 2000);
+//                        int mon = DateTime.Now.Month - int.Parse(match.Groups["MONTH"].Value) + 1 + year * 12;
+//                        string insur = match.Groups["INSUR"].Value;
+
+//                        string url = "http://www.bm.ru/ru/billing/index.php";
+//                        WebClient webClient = new WebClient();
+//                        string data = String.Format("mode=doit&req_code={0}&date_option={1}", code, mon.ToString());
+//                        webClient.Headers.Add(HttpRequestHeader.ContentType, "application/x-www-form-urlencoded");
+//                        webClient.Headers.Add(HttpRequestHeader.Referer, url);
+//                        string response = webClient.UploadString(url, data);
+//                        string monthReg = "<tr class=\"last\" >\n\t<td><div.*>(?<MONTH>.+) года.*</div></td>";
+//                        string amountReg = "\n\t<td><div.*>(?<AMOUNT>.+) руб.*</div></td>";
+//                        string insuranceReg = "\n\t<td><div.*>.*руб.*</div></td>";
+//                        string amountAllReg = "\n\t<td><div.*>(?<AMOUNTALL>.+) руб.*</div></td>";
+//                        match = Regex.Match(response, monthReg + amountReg + insuranceReg + amountAllReg, RegexOptions.Multiline);
+//                        if (match.Success)
+//                        {
+//                            if (insur == "1")
+//                                result = match.Groups["AMOUNTALL"].Value;
+//                            else
+//                                result = match.Groups["AMOUNT"].Value;
+//                            log("CheckOnlineCyberID_35 data:" + data + ", Amount=" + result);
+//                        }
+//                        else
+//                            log("CheckOnlineCyberID_35 data:" + data + ", wrong RESPONSE format");
+//                    }
+//                    else
+//                        log("CheckOnlineCyberID_35 wrong ACCOUNT format");
+//                }
+//                else
+//                    log("CheckOnlineCyberID_35 wrong NUMBER format");
+//            }
+//            catch (Exception ex)
+//            {
+//                log("CheckOnlineCyberID_35 exception:" + ex.Message);
+//            }
+//            return msgADDINFO + result + "\r\n";
+//        }
+//    }
 //}

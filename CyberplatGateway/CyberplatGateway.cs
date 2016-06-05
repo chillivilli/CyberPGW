@@ -29,16 +29,28 @@ namespace Gateways
         private string testUrl = "/cgi-bin/es/es_pay_check.cgi";
         private string testPhone = "9166731169";
         private string proxyUrl, proxyLogin, proxyPassword;
-
+        /// <summary>
+        /// Использование отдельной точки для платежей без комиссии
+        /// </summary>
         private bool use_second_point;
+        /// <summary>
+        /// Номер точки без комиссии
+        /// </summary>
         private int cyberplatAP_2 = 0;
+        /// <summary>
+        /// Номер оператора без комиссии
+        /// </summary>
         private int cyberplatOP_2 = 0;
+        /// <summary>
+        /// пароль для ключа без комисси
+        /// </summary>
         private string password2;
-
+        /// <summary>
+        /// секретный ключ для платежей без комиссии
+        /// </summary>
         private org.CyberPlat.IPrivKey cyberplatSecretKey_2 = null;
 
         private string cyberplatStatUrl = "";
-
         //key number for answer signing
         private string cyberplatKeyNum = "";
 
@@ -111,9 +123,6 @@ namespace Gateways
             this.cyberplatPublicKey = cyberplatGateway.cyberplatPublicKey;
             this.cyberplatStatUrl = cyberplatGateway.cyberplatStatUrl;
             this.paySystemKeyID = cyberplatGateway.paySystemKeyID;
-            this.serial = cyberplatGateway.serial;
-            this.testUrl = cyberplatGateway.testUrl;
-            this.testPhone = cyberplatGateway.testPhone;
 
             this.use_second_point = cyberplatGateway.use_second_point;
             this.cyberplatAP_2 = cyberplatGateway.cyberplatAP_2;
@@ -121,12 +130,18 @@ namespace Gateways
             this.password2 = cyberplatGateway.password2;
             this.cyberplatSecretKey_2 = cyberplatGateway.cyberplatSecretKey_2;
 
+            this.serial = cyberplatGateway.serial;
+            this.testUrl = cyberplatGateway.testUrl;
+            this.testPhone = cyberplatGateway.testPhone;
+
             this.proxyUrl = cyberplatGateway.proxyUrl;
             this.proxyLogin = cyberplatGateway.proxyLogin;
-            this.proxyPassword= cyberplatGateway.proxyPassword;
+            this.proxyPassword = cyberplatGateway.proxyPassword;
+
+            this.cyberplatKeyNum = cyberplatGateway.cyberplatKeyNum;
 
             this.GateProfileID = cyberplatGateway.GateProfileID;
-            
+
             this.showAmountAll = cyberplatGateway.showAmountAll;
 
             this.Copy(cyberplatGateway);
@@ -161,29 +176,27 @@ namespace Gateways
 
                 cyberplatProcessingUrl = xml.DocumentElement["server_url"].InnerText;
                 cyberplatAP = int.Parse(xml.DocumentElement["ap"].InnerText);
+                cyberplatAP_2 = int.Parse(xml.DocumentElement["ap2"].InnerText);
                 cyberplatOP = int.Parse(xml.DocumentElement["op"].InnerText);
+                cyberplatOP_2 = int.Parse(xml.DocumentElement["op2"].InnerText);
                 cyberplatSD = int.Parse(xml.DocumentElement["sd"].InnerText);
                 paySystemKeyID = cyberplatSD.ToString();
 
-                this.cyberplatAP_2 = int.Parse(xml.DocumentElement["ap2"].InnerText);
-                this.cyberplatOP_2 = int.Parse(xml.DocumentElement["op2"].InnerText);
+                cyberplatKeyNum = xml.DocumentElement["skey_num"].InnerText;
 
-                cyberplatSecretKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);                
+                cyberplatSecretKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);
+                cyberplatSecretKey_2 = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key2"].InnerText, xml.DocumentElement["password2"].InnerText);
                 cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(xml.DocumentElement["serial"].InnerText));
 
-                this.cyberplatSecretKey_2 = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key2"].InnerText, xml.DocumentElement["password2"].InnerText);
-
-                cyberplatKeyNum = xml.DocumentElement["skey_num"].InnerText;
-                if (xml.DocumentElement["use_second_point"] != null
-                    && (xml.DocumentElement["use_second_point"].InnerText.ToLower() == "true" 
-                    || xml.DocumentElement["use_second_point"].InnerText == "1"))
+                if (xml.DocumentElement["use_second_point"] != null &&
+                    (xml.DocumentElement["use_second_point"].InnerText.ToLower() == "true" ||
+                     xml.DocumentElement["use_second_point"].InnerText == "1"))
                 {
-                    this.use_second_point = true;
+                    use_second_point = true;
                 }
                 else
-                {
-                    this.use_second_point = false;
-                }
+                    use_second_point = false;
+
                 try
                 {
                     proxyUrl = xml.DocumentElement["proxy_url"].InnerText;
