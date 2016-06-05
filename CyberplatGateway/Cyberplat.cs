@@ -33,6 +33,8 @@ namespace Gateways
 
         private string cyberplatStatUrl = "";
 
+        //key number for answer signing
+        private string cyberplatKeyNum = "";
 
         #region STATIC_ATTRIBUTES
         private static string msgAP = "AP=";
@@ -145,6 +147,8 @@ namespace Gateways
 
                 cyberplatSecretKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);                
                 cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(xml.DocumentElement["serial"].InnerText));
+
+                cyberplatKeyNum = xml.DocumentElement["skey_num"].InnerText;
 
                 try
                 {
