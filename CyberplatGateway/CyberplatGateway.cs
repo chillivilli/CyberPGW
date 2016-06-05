@@ -132,7 +132,7 @@ namespace Gateways
             if (cyberplatSecretStatKey != null)
                 cyberplatSecretStatKey.closeKey();
         }
-
+        
         /// <summary>
         /// Инициализация состояния шлюза, ключи урлы и тд
         /// </summary>
@@ -755,7 +755,7 @@ namespace Gateways
 
             return table;
         }
-
+        
         int ConvertOperatorID(int operatorID)
         {
             switch (operatorID)
@@ -980,6 +980,7 @@ namespace Gateways
             }
             return errorStatus;
         }
+        
     }
 
   

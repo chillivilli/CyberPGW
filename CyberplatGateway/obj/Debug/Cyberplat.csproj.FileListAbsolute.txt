@@ -2,6 +2,12 @@ D:\Dev\DotNet\Out\CyberplatGateway.dll
 D:\Dev\DotNet\Out\CyberplatGateway.pdb
 D:\Dev\DotNet\Out\CyberplatGateway.dll.CodeAnalysisLog.xml
 D:\Dev\DotNet\Out\CyberplatGateway.dll.lastcodeanalysissucceeded
-D:\Dev\DotNet\CyberPGW\CyberplatGateway\obj\Debug\Cyberplat.csprojResolveAssemblyReference.cache
 D:\Dev\DotNet\CyberPGW\CyberplatGateway\obj\Debug\CyberplatGateway.dll
 D:\Dev\DotNet\CyberPGW\CyberplatGateway\obj\Debug\CyberplatGateway.pdb
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\CyberplatGateway.dll
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\CyberplatGateway.pdb
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\CyberplatGateway.dll.CodeAnalysisLog.xml
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\CyberplatGateway.dll.lastcodeanalysissucceeded
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\GatewayInterface.dll
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\bin\Debug\MonitoringClientRemoting.dll
+D:\Dev\DotNet\CyberPGW\CyberplatGateway\obj\Debug\Cyberplat.csprojResolveAssemblyReference.cache
