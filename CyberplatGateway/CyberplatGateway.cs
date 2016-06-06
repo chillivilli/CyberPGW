@@ -1044,8 +1044,6 @@ namespace Gateways
                 }
                 errorStatus = ErrorStatus.ProcessingPublicKeyError;
                 response = cyberplatPublicKey.verifyText(response);
-
-                m_logger.Trace("verified response: {0}", response);
                 
                 errorStatus = ErrorStatus.OK;
             }
