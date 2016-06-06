@@ -30,7 +30,7 @@
       <stat_url>https://service.cyberplat.ru/cgi-bin/view_stat/api_stat.cgi</stat_url>
       <show_amount_all>false</show_amount_all>
 	  <reestr_filename_start></reestr_filename_start>
-	  <use_second_point hint="Использование отдельной точки для платежей без комиссии>1</use_second_point>
+	  <use_second_point hint="Использование отдельной точки для платежей без комиссии>1"></use_second_point>
       <ap2 hint="Номер точки без комиссии"></ap2>
       <op2 hint="Номер оператора без комиссии"></op2>
       <password2 secure=""></password2>

@@ -11,6 +11,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Gateways.Utils;
+using Cyberplat;
 
 namespace Gateways 
 {
@@ -25,7 +26,7 @@ namespace Gateways
         private org.CyberPlat.IPrivKey cyberplatSecretKey = null;
         private org.CyberPlat.IPrivKey cyberplatSecretStatKey = null;
         private org.CyberPlat.IPrivKey cyberplatPublicKey = null;
-        private uint serial = 904291;
+        
         private string testUrl = "/cgi-bin/es/es_pay_check.cgi";
         private string testPhone = "9166731169";
         private string proxyUrl, proxyLogin, proxyPassword;
@@ -53,6 +54,9 @@ namespace Gateways
         private string cyberplatStatUrl = "";
         //key number for answer signing
         private string cyberplatKeyNum = "";
+
+
+        private string cyberplatBalanceUrl;
 
         #region STATIC_ATTRIBUTES
         private static string msgAP = "AP=";
@@ -105,9 +109,13 @@ namespace Gateways
             UnknownError = 4096
         }
 
+
+        private Logger m_logger;
+
         public CyberplatGateway()
         {
             Balance = "";
+            m_logger = new Logger(log, LogLevel.Info, DetailLog, LogLevel.Trace);
         }
 
         public CyberplatGateway(CyberplatGateway cyberplatGateway)
@@ -129,8 +137,7 @@ namespace Gateways
             this.cyberplatOP_2 = cyberplatGateway.cyberplatOP_2;
             this.password2 = cyberplatGateway.password2;
             this.cyberplatSecretKey_2 = cyberplatGateway.cyberplatSecretKey_2;
-
-            this.serial = cyberplatGateway.serial;
+            
             this.testUrl = cyberplatGateway.testUrl;
             this.testPhone = cyberplatGateway.testPhone;
 
@@ -143,7 +150,9 @@ namespace Gateways
             this.GateProfileID = cyberplatGateway.GateProfileID;
 
             this.showAmountAll = cyberplatGateway.showAmountAll;
+            this.cyberplatBalanceUrl = cyberplatGateway.cyberplatBalanceUrl;
 
+            m_logger = new Logger(log, LogLevel.Info, DetailLog, LogLevel.Trace);
             this.Copy(cyberplatGateway);
         }
 
@@ -169,8 +178,10 @@ namespace Gateways
         {
             try
             {
-                log("CyberplatGateway::Initialize, GateProfileID=" + GateProfileID.ToString());
 
+
+                m_logger.Trace("CyberplatGateway::Initialize, GateProfileID={0}", GateProfileID);
+                
                 XmlDocument xml = new XmlDocument();
                 xml.LoadXml(data);
 
@@ -186,7 +197,9 @@ namespace Gateways
 
                 cyberplatSecretKey = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key"].InnerText, xml.DocumentElement["password"].InnerText);
                 cyberplatSecretKey_2 = org.CyberPlat.IPriv.openSecretKey(xml.DocumentElement["secret_key2"].InnerText, xml.DocumentElement["password2"].InnerText);
-                cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(xml.DocumentElement["serial"].InnerText));
+                cyberplatPublicKey = org.CyberPlat.IPriv.openPublicKey(xml.DocumentElement["public_key"].InnerText, uint.Parse(cyberplatKeyNum));
+
+                cyberplatBalanceUrl = xml.DocumentElement["balance_url"].InnerText;
 
                 if (xml.DocumentElement["use_second_point"] != null &&
                     (xml.DocumentElement["use_second_point"].InnerText.ToLower() == "true" ||
@@ -202,11 +215,11 @@ namespace Gateways
                     proxyUrl = xml.DocumentElement["proxy_url"].InnerText;
                     proxyLogin = xml.DocumentElement["proxy_login"].InnerText;
                     proxyPassword = xml.DocumentElement["proxy_password"].InnerText;
-                    log("CyberplatGateway::Initialize, proxy parameters OK");
+                    m_logger.Info("CyberplatGateway::Initialize, proxy parameters OK");
                 }
                 catch
                 {
-                    log("CyberplatGateway::Initialize, proxy disabled");
+                    m_logger.Info("CyberplatGateway::Initialize, proxy disabled");
                 }
 
                 if ((cyberplatAP == 0) || (cyberplatProcessingUrl == ""))
@@ -219,13 +232,12 @@ namespace Gateways
                 }
                 catch (Exception ex)
                 {
-                    log("CyberplatGateway::Initialize, stat params exception:" + ex.ToString());
+                    m_logger.Warning(string.Format("CyberplatGateway::Initialize, stat params exception: {0}", ex.ToString()));
                 }
 
 
                 try
                 {
-                    serial = uint.Parse(xml.DocumentElement["serial"].InnerText);
                     testUrl = xml.DocumentElement["test_url"].InnerText;
                     testPhone = xml.DocumentElement["test_phone"].InnerText;
                 }
@@ -234,7 +246,7 @@ namespace Gateways
             }
             catch (Exception ex)
             {
-                log("CyberplatGateway::Initialize exception: " + ex.ToString());
+                m_logger.Critical("InitializeError", ex);
                 throw ex;
             }
         }
@@ -255,33 +267,18 @@ namespace Gateways
                     msc = "0" + msc;
                 msc = msc.Substring(msc.Length - 12, 12);
 
-                string requestString = string.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\nSESSION={3}\r\nNUMBER={4}\r\nAMOUNT=10.00\r\nAMOUNT_ALL=10.00\r\n{5}",
-                    cyberplatSD, cyberplatAP, cyberplatOP, DateTime.Now.ToString("ddMMyyyy") + msc, testPhone, testPhone != "1111111111" ? "REQ_TYPE=1\r\nCOMMENT=MONITORING_CHECK\r\n" : "");
+                string requestString = string.Format("SESSION={0}\r\nNUMBER={1}\r\nAMOUNT=10.00\r\nAMOUNT_ALL=10.00\r\n{2}\r\n{3}{4}",
+                    DateTime.Now.ToString("ddMMyyyy") + msc, testPhone, testPhone != "1111111111" ? "REQ_TYPE=1\r\nCOMMENT=MONITORING_CHECK\r\n" : "", 
+                    msgAcceptKeys, cyberplatKeyNum);
 
-                errorStatus = ErrorStatus.ProcessingSecretKeyError;
-
-                requestString = cyberplatSecretKey.signText(requestString);
-
-                errorStatus = ErrorStatus.UnknownError;
-
-                requestString = HttpUtility.UrlEncode(requestString);
-                requestString = "inputmessage=" + requestString;
-
-                WebClient webClient = new WebClient();
-                webClient.Encoding = Encoding.GetEncoding(1251);
-
-                errorStatus = ErrorStatus.CyberplatConnectionError;
-
-                string responseString = webClient.UploadString(cyberplatProcessingUrl + testUrl, requestString);
-
-                errorStatus = ErrorStatus.ProcessingPublicKeyError;
-
-                responseString = cyberplatPublicKey.verifyText(responseString);
-
-                response = responseString;
-                errorStatus = ErrorStatus.InternalProcessingSecretKeyError;
-
+                string responseString;
+                errorStatus = TransactCyberplat(testUrl, requestString, out responseString);
+                
                 string keyPath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,"Keys");
+
+
+                response = "Ok" + "\r\n" + responseString;
+
 
                 if (File.Exists(keyPath + "\\internal.keyInfo"))
                 {
@@ -294,21 +291,25 @@ namespace Gateways
                     internalKey.closeKey();
                 }
 
-                try
+                if (!string.IsNullOrEmpty(cyberplatStatUrl) && cyberplatSecretStatKey != null)
                 {
-                    response += "\r\nПроверка статистики Киберплат, RESULT=";
+                    try
+                    {
 
-                    byte[] gzipFile;
-                    bool result = TransactCyberplatStatistics(cyberplatStatUrl, new DateTime(1990, 1, 1), this.cyberplatSD, 
-                        cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
-                    if (!result)
-                        throw new Exception("Не удалось получить данные Cyberplat,\r\nпроверьте правильность ключей и связи с сервером Cyberplat.");
+                        response += "\r\nПроверка статистики Киберплат, RESULT=";
 
-                    response += "OK";
-                }
-                catch(Exception ex)
-                {
-                    response += ex.Message;
+                        byte[] gzipFile;
+                        bool result = TransactCyberplatStatistics(cyberplatStatUrl, new DateTime(1990, 1, 1), this.cyberplatSD,
+                            cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
+                        if (!result)
+                            throw new Exception("Не удалось получить данные Cyberplat,\r\nпроверьте правильность ключей и связи с сервером Cyberplat.");
+
+                        response += "OK";
+                    }
+                    catch (Exception ex)
+                    {
+                        response += ex.Message;
+                    }
                 }
             }
             catch (org.CyberPlat.IPrivException e)
@@ -337,7 +338,7 @@ namespace Gateways
             }
             catch (Exception ex)
             {
-                log(string.Format("ProcessOfflinePayment KeyID={2}(initial_session={0}) exception: {1}", initial_session, ex.Message, keyID));
+                m_logger.Critical(string.Format("ProcessOfflinePayment KeyID={1}(initial_session={0})", initial_session, keyID), ex);
             }
         }
 
@@ -358,7 +359,7 @@ namespace Gateways
             }
             catch (Exception ex)
             {
-                log(string.Format("ProcessOnlinePayment KeyID={2} (initial_session={0}) exception: {1}", initial_session, ex.Message, keyID));
+                m_logger.Critical(string.Format("ProcessOnlinePayment KeyID={1}(initial_session={0})", initial_session, keyID), ex);
             }
 
             return response;
@@ -435,8 +436,8 @@ namespace Gateways
                     ErrorStatus errorStatus = TransactCyberplat(url, request, out answer);
                     if (errorStatus != ErrorStatus.OK)
                     {
-                        log("Status KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
-                        throw new Exception("$");
+                        m_logger.Error("Status KeyID={0} (initialSession = {1}  session = {2} ) errorsStatus = {3}", keyID, initial_session, session, errorStatus);
+                        throw new Exception(errorStatus.ToString());
                     }
                     string[] messageLines = answer.Split(new string[] { "\r\n" }, StringSplitOptions.None);
 
@@ -458,7 +459,7 @@ namespace Gateways
                         }
                     }
 
-                    log("Status KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + result.ToString() + "," + errorCode.ToString());
+                    m_logger.Info("Status KeyID={0} (initialSession = {1}  session = {2} ) errorsCode = {3}", keyID, initial_session, session, errorCode);
 
                     if (errorCode == 11)
                     {
@@ -525,8 +526,9 @@ namespace Gateways
                     ErrorStatus errorStatus = TransactCyberplat(url, request, out answer);
                     if (errorStatus != ErrorStatus.OK)
                     {
-                        log("Request KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
-                        throw new Exception("$");
+
+                        m_logger.Error("Status KeyID={0} (initialSession = {1}  session = {2} ) errorsStatus = {3}", keyID, initial_session, session, errorStatus);
+                        throw new Exception(errorStatus.ToString());
                     }
                     string[] messageLines = answer.Split(new string[] { "\r\n" }, StringSplitOptions.None);
 
@@ -539,7 +541,7 @@ namespace Gateways
                             result = int.Parse(messageLines[i].Substring(msgRESULT.Length));
                     }
 
-                    log("Request KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorCode.ToString());
+                    m_logger.Info("Status KeyID={0} (initialSession = {1}  session = {2} ) errorsCode = {3}", keyID, initial_session, session, errorCode);
 
                     if (errorCode == 21)
                         zeroBalance = true;
@@ -584,8 +586,8 @@ namespace Gateways
                         }
                         if (errorStatus != ErrorStatus.OK)
                         {
-                            log("Payment KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorStatus.ToString());
-                            throw new Exception("$");
+                            m_logger.Error("Status KeyID={0} (initialSession = {1}  session = {2} ) errorsStatus = {3}", keyID, initial_session, session, errorStatus);
+                            throw new Exception(errorStatus.ToString());
                         }
 
                         messageLines = answer.Split(new string[] { "\r\n" }, StringSplitOptions.None);
@@ -608,7 +610,7 @@ namespace Gateways
                             PreprocessPayment(ap, initial_session, "", DateTime.Now, exData);
                         }
 
-                        log("Payment KeyID=" + keyID + " (" + initial_session + "," + session + ")=" + errorCode.ToString());
+                        m_logger.Info("Status KeyID={0} (initialSession = {1}  session = {2} ) errorsCode = {3}", keyID, initial_session, session, errorCode);
                     }
                 }
             }
@@ -625,25 +627,13 @@ namespace Gateways
             webClient.Encoding = System.Text.Encoding.GetEncoding(1251);
             try
             {
-                string restText = String.Format("SD={0}\r\nAP={1}\r\nOP={2}\r\n{3}{4}\r\n", cyberplatSD, cyberplatAP, cyberplatOP, msgAcceptKeys, cyberplatKeyNum);
+                string restText = String.Format("{0}{1}\r\n", msgAcceptKeys, cyberplatKeyNum);
+                
+                string response;
+                var result = TransactCyberplat(cyberplatBalanceUrl, restText, out response);
 
-                string url = cyberplatProcessingUrl + "/cgi-bin/mts_espp/mtspay_rest.cgi";
-
-                DetailLog("url: " + url);
-                DetailLog("request: " + restText);
-
-                restText = cyberplatSecretKey.signText(restText);
-
-                restText = HttpUtility.UrlEncode(restText);
-                restText = "inputmessage=" + restText;
-
-
-
-                restText = webClient.UploadString(url, restText);
-
-                restText = cyberplatPublicKey.verifyText(restText);
-
-
+                restText = response;
+                                
                 string[] lines = restText.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
 
                 foreach (string line in lines)
@@ -663,13 +653,18 @@ namespace Gateways
                     }
                 }
 
-                log("GetBalance for KeyID =" + KeyID + " OK: " + restText);
+                m_logger.Info("GetBalance for KeyID = {0} OK: {1}", KeyID, restText); 
                 Balance = restText;
+            }
+            catch(org.CyberPlat.IPrivException cyberEx)
+            {
+                Balance = "";
+                m_logger.Error(string.Format("GetBalance for KeyID = {0} code: {1}", KeyID, cyberEx.code), cyberEx);
             }
             catch (Exception ex)
             {
                 Balance = "";
-                log("GetBalance for KeyID =" + KeyID + " exception: " + ex.Message);
+                m_logger.Error(string.Format("GetBalance for KeyID = {0}", KeyID), ex);
             }
 
             return Balance;
@@ -694,7 +689,7 @@ namespace Gateways
 
 
             ErrorStatus errorStatus = TransactCyberplat(serviceUrls.Length < 1 ? paymentData.RequestLocalPath : serviceUrls[0], request, out responseString);
-            log("Transit request is complete, (" + paymentData.RequestLocalPath + ", " + ((paymentData.Comment.Length) > 0 ? paymentData.Comment : paymentData.TerminalID.ToString()) + ")=" + errorStatus.ToString());
+            m_logger.Info("Transit request is complete, ({0}, {1})={2}", paymentData.RequestLocalPath,((paymentData.Comment.Length) > 0 ? paymentData.Comment : paymentData.TerminalID.ToString()), errorStatus);
             if (errorStatus != ErrorStatus.OK)
                 throw new Exception("Error SemiOnline Request.");
 
@@ -709,7 +704,7 @@ namespace Gateways
                 Directory.CreateDirectory(statPath);
 
             string fileName = Path.Combine(statPath, "file_stat" + GateProfileID.ToString() + "." + dateFrom.Date.ToString("yyyy-MM-dd") + ".gz");
-            log("Trying to get statistic file '" + fileName.Substring(statPath.Length) + "'...");
+            m_logger.Info("Trying to get statistic file '{0}'...", fileName.Substring(statPath.Length));
             byte[] gzipFile;
 
             bool result = TransactCyberplatStatistics(cyberplatStatUrl, dateFrom.Date, cyberplatSD, cyberplatSecretStatKey, cyberplatPublicKey, out gzipFile);
@@ -734,8 +729,8 @@ namespace Gateways
                 int linesProcessed = 0;
 
                 File.WriteAllBytes(fileName, gzipFile);
-                log("Received cyberplat statistics file '" + fileName.Substring(statPath.Length) + "'");
-
+                m_logger.Info("Received cyberplat statistics file '{0}'", fileName.Substring(statPath.Length));
+                
                 PPS.MyTools.SevenZip.Unzip(System.AppDomain.CurrentDomain.BaseDirectory + "\\7z.exe", "x -y", fileName, statPath);
 
                 File.Delete(fileName);
@@ -813,11 +808,11 @@ namespace Gateways
                         lineOK++;
                         if (lineOK > 10)
                         {
-                            log("ProcessCyberplatStatistics error - Can't parse line " + lineNumber.ToString() + " (trminating job)." + ex.ToString());
+                            m_logger.Error(string.Format("ProcessCyberplatStatistics error - Can't parse line {0} (trminating job)", lineNumber), ex);
                             throw ex;
                         }
                         else
-                            log("ProcessCyberplatStatistics error - Can't parse line " + lineNumber.ToString() + ". " + ex.ToString());
+                            m_logger.Error(string.Format("ProcessCyberplatStatistics error - Can't parse line {0})", lineNumber), ex);
                     }
 
                     lineNumber++;
@@ -825,7 +820,7 @@ namespace Gateways
             }
             else
             {
-                log("ProcessCyberplatStatistics zero length response file");
+                m_logger.Info("ProcessCyberplatStatistics zero length response file");
             }
 
             return table;
@@ -925,11 +920,12 @@ namespace Gateways
             }
             catch (org.CyberPlat.IPrivException err)
             {
-                log("Ошибка ключей: " + err.ToString() + " ");
+                m_logger.Error("Ошибка ключей: ", err);
+                
             }
             catch (Exception ex)
             {
-                log(ex.ToString());
+                m_logger.Error(string.Empty, ex);
             }
 
             if (!result)
@@ -964,11 +960,8 @@ namespace Gateways
 
                 errorStatus = ErrorStatus.ProcessingSecretKeyError;
 
-                DetailLog("url: " + url);
-
-                if (detailLogEnabled)
-                    DetailLog("request: " + request);
-
+                m_logger.Trace("url: {0}: request: {1}", url, request);
+                
                 request = key.signText(request);
 
                 errorStatus = ErrorStatus.UnknownError;
@@ -1018,6 +1011,8 @@ namespace Gateways
 
                     response = readStream.ReadToEnd();
 
+                    m_logger.Trace("raw response: {0}", response);
+
                     readStream.Close(); readStream = null;
                     receiveStream.Close(); receiveStream = null;
                     res.Close(); res = null;
@@ -1050,14 +1045,13 @@ namespace Gateways
                 errorStatus = ErrorStatus.ProcessingPublicKeyError;
                 response = cyberplatPublicKey.verifyText(response);
 
-                if (detailLogEnabled)
-                    DetailLog("response: " + response);
-
+                m_logger.Trace("verified response: {0}", response);
+                
                 errorStatus = ErrorStatus.OK;
             }
             catch (Exception ex)
             {
-                log("TransactCyberplatFailed:\n" + ex.ToString());
+                m_logger.Error("TransactCyberplatFailed:", ex);
             }
             return errorStatus;
         }
